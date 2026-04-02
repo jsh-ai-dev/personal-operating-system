@@ -25,10 +25,14 @@ class GetNoteService(
 ) : GetNoteUseCase {
 
     override fun getById(id: String): Note? {
+        // [2-GET] 조회 유스케이스 계층입니다.
+        // 조회는 생성/수정과 달리 도메인 규칙을 새로 적용하지 않고 저장소에 바로 위임합니다.
         // 저장소에 위임
         // null이 반환되면 "존재하지 않음"을 의미
+        // [4-GET] 저장소 조회 지점입니다.
         return noteQueryPort.findById(id)
     }
 }
+
 
 

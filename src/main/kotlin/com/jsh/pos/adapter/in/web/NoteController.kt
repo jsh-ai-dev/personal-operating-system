@@ -80,6 +80,8 @@ class NoteController(
      */
     @PostMapping
     fun create(@Valid @RequestBody request: CreateNoteRequest): ResponseEntity<NoteResponse> {
+        // [1-POST] HTTP 요청이 가장 먼저 들어오는 진입점입니다.
+        // 브레이크포인트 추천: request 값(title/content/visibility/tags)이 예상대로 들어오는지 확인
         // 1. 요청 DTO를 유스케이스 Command로 변환
         val note = createNoteUseCase.create(
             CreateNoteUseCase.Command(
@@ -92,6 +94,7 @@ class NoteController(
 
         // 2. 응답 DTO로 변환 후 201 Created로 반환
         // 201은 HTTP 표준: 새 자원이 생성되었을 때 사용
+        // [5-POST] 최종 HTTP 응답 반환 지점입니다.
         return ResponseEntity.status(HttpStatus.CREATED).body(note.toResponse())
     }
 
@@ -109,6 +112,8 @@ class NoteController(
      */
     @GetMapping("/{id}")
     fun getById(@PathVariable id: String): ResponseEntity<NoteResponse> {
+        // [1-GET] 단건 조회 요청의 시작점입니다.
+        // 브레이크포인트 추천: path variable인 id가 올바른지 확인
         // 1. 유스케이스 호출해 노트 조회
         val note = getNoteUseCase.getById(id)
 
@@ -116,6 +121,7 @@ class NoteController(
         ?: return ResponseEntity.notFound().build()
 
         // 3. 있으면 200 OK로 응답 DTO 반환
+        // [5-GET] 조회 성공 시 응답을 반환하는 지점입니다.
         return ResponseEntity.ok(note.toResponse())
     }
 
@@ -130,7 +136,10 @@ class NoteController(
      */
     @GetMapping("/search")
     fun search(@RequestParam keyword: String): ResponseEntity<List<NoteResponse>> {
+        // [1-SEARCH] 검색 요청의 시작점입니다.
+        // 브레이크포인트 추천: keyword에 앞뒤 공백이 포함되어 들어오는지 확인
         val notes = searchNotesUseCase.search(SearchNotesUseCase.Command(keyword = keyword))
+        // [5-SEARCH] 검색 결과를 응답 DTO로 변환해 반환하는 지점입니다.
         return ResponseEntity.ok(notes.map { it.toResponse() })
     }
 
@@ -145,6 +154,8 @@ class NoteController(
         @PathVariable id: String,
         @Valid @RequestBody request: UpdateNoteRequest,
     ): ResponseEntity<NoteResponse> {
+        // [1-PUT] 수정 요청의 시작점입니다.
+        // 브레이크포인트 추천: id와 request 본문이 함께 올바르게 들어오는지 확인
         val updated = updateNoteUseCase.updateById(
             id = id,
             command = UpdateNoteUseCase.Command(
@@ -155,6 +166,7 @@ class NoteController(
             ),
         ) ?: return ResponseEntity.notFound().build()
 
+        // [5-PUT] 수정 성공 후 200 OK 응답을 반환하는 지점입니다.
         return ResponseEntity.ok(updated.toResponse())
     }
 
@@ -170,10 +182,14 @@ class NoteController(
      */
     @DeleteMapping("/{id}")
     fun deleteById(@PathVariable id: String): ResponseEntity<Void> {
+        // [1-DELETE] 삭제 요청의 시작점입니다.
+        // 브레이크포인트 추천: 삭제 대상 id와 delete 결과(true/false) 분기 확인
         val deleted = deleteNoteUseCase.deleteById(id)
         return if (deleted) {
+            // [5-DELETE] 삭제 성공 시 204 No Content 반환
             ResponseEntity.noContent().build()
         } else {
+            // [5-DELETE] 삭제 대상이 없으면 404 Not Found 반환
             ResponseEntity.notFound().build()
         }
     }
@@ -250,6 +266,7 @@ private fun Note.toResponse(): NoteResponse = NoteResponse(
     visibility = visibility,
     tags = tags,
 )
+
 
 
 

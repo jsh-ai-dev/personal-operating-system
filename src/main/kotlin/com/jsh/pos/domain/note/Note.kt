@@ -41,6 +41,8 @@ data class Note(
         tags: Set<String>,
         now: Instant,
     ): Note {
+        // [3-PUT] 수정 시 도메인 규칙이 실제로 적용되는 지점입니다.
+        // 브레이크포인트 추천: trim 전/후 값, createdAt 유지 여부, updatedAt 변경 여부 확인
         require(title.isNotBlank()) { "제목은 비워둘 수 없습니다" }
         require(content.isNotBlank()) { "본문은 비워둘 수 없습니다" }
 
@@ -79,6 +81,8 @@ data class Note(
             tags: Set<String>,
             now: Instant,
         ): Note {
+            // [3-POST] 생성 시 도메인 규칙이 실제로 적용되는 지점입니다.
+            // 브레이크포인트 추천: 공백 제거, 빈 문자열 검증, 태그 정제 결과 확인
             // 제목 검증: 공백만 있으면 안 됨
             require(title.isNotBlank()) { "제목은 비워둘 수 없습니다" }
 
@@ -101,6 +105,7 @@ data class Note(
         }
     }
 }
+
 
 
 

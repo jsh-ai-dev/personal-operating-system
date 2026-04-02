@@ -35,6 +35,8 @@ class InMemoryNoteRepository : NoteCommandPort, NoteQueryPort {
      * @return 저장된 노트 (그대로 반환)
      */
     override fun save(note: Note): Note {
+        // [4-POST/PUT] 실제 저장이 일어나는 지점입니다.
+        // 브레이크포인트 추천: note.id가 기대값인지, map에 덮어쓰기/신규 저장이 맞는지 확인
         notes[note.id] = note  // ID를 키로 저장
         return note            // 반환 (같은 객체)
     }
@@ -64,6 +66,8 @@ class InMemoryNoteRepository : NoteCommandPort, NoteQueryPort {
      * @return 매칭된 노트 목록
      */
     override fun searchByKeyword(keyword: String): List<Note> {
+        // [4-SEARCH] 실제 검색 로직이 수행되는 지점입니다.
+        // 브레이크포인트 추천: normalized 값, title/content/tags 중 어느 조건이 매칭되는지 확인
         val normalized = keyword.lowercase()
 
         return notes.values.filter { note ->
@@ -73,6 +77,7 @@ class InMemoryNoteRepository : NoteCommandPort, NoteQueryPort {
         }
     }
 }
+
 
 
 

@@ -18,7 +18,11 @@ class DeleteNoteService(
 ) : DeleteNoteUseCase {
 
     override fun deleteById(id: String): Boolean {
+        // [2-DELETE] 삭제 유스케이스 계층입니다.
+        // 현재는 단순 위임이지만, 나중에 soft delete/감사로그가 들어갈 자리입니다.
+        // [4-DELETE] 실제 삭제는 저장소 어댑터가 수행합니다.
         return noteCommandPort.deleteById(id)
     }
 }
+
 

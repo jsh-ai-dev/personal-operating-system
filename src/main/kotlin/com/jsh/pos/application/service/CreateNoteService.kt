@@ -32,6 +32,8 @@ class CreateNoteService(
 ) : CreateNoteUseCase {
 
     override fun create(command: CreateNoteUseCase.Command): Note {
+        // [2-POST] 컨트롤러 다음으로 도착하는 유스케이스 계층입니다.
+        // 여기서는 "어떤 순서로 처리할지"를 조율하고, 실제 규칙 검증은 도메인에 맡깁니다.
         // 1. 도메인 엔티티 생성 (검증 수행)
         val note = Note.create(
             id = UUID.randomUUID().toString(), // 새 ID 생성 (Java 표준)
@@ -44,8 +46,10 @@ class CreateNoteService(
 
         // 2. 저장소를 통해 영속화 (포트 위임)
         // 저장소 구현이 무엇인지(JPA, Redis 등)는 알 필요 없음
+        // [4-POST] 저장소 어댑터로 넘어가는 지점입니다.
         return noteCommandPort.save(note)
     }
 }
+
 
 
