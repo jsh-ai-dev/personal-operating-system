@@ -3,6 +3,7 @@ package com.jsh.pos.adapter.`in`.web
 import com.jsh.pos.application.port.`in`.CreateNoteUseCase
 import com.jsh.pos.application.port.`in`.DeleteNoteUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
+import com.jsh.pos.application.port.`in`.SearchNotesUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
 import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
@@ -56,6 +57,9 @@ class NoteControllerTest {
 
     @MockBean
     lateinit var deleteNoteUseCase: DeleteNoteUseCase
+
+    @MockBean
+    lateinit var searchNotesUseCase: SearchNotesUseCase
 
     @MockBean
     lateinit var updateNoteUseCase: UpdateNoteUseCase
@@ -238,7 +242,35 @@ class NoteControllerTest {
         mockMvc.perform(delete("/api/v1/notes/missing-note"))
             .andExpect(status().isNotFound)
     }
+
+    /**
+     * 테스트: GET /api/v1/notes/search?keyword=... 호출 시 검색 결과를 반환하는가?
+     */
+    @Test
+    fun `GET search returns matched notes`() {
+        val command = SearchNotesUseCase.Command(keyword = "kotlin")
+        given(searchNotesUseCase.search(command)).willReturn(
+            listOf(
+                Note(
+                    id = "note-1",
+                    title = "kotlin memo",
+                    content = "clean architecture",
+                    visibility = Visibility.PUBLIC,
+                    tags = setOf("kotlin"),
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
+            ),
+        )
+
+        mockMvc.perform(get("/api/v1/notes/search").param("keyword", "kotlin"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].id").value("note-1"))
+            .andExpect(jsonPath("$[0].title").value("kotlin memo"))
+    }
 }
+
+
 
 
 

@@ -3,6 +3,7 @@ package com.jsh.pos.adapter.`in`.web
 import com.jsh.pos.application.port.`in`.CreateNoteUseCase
 import com.jsh.pos.application.port.`in`.DeleteNoteUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
+import com.jsh.pos.application.port.`in`.SearchNotesUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
 import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController
  * - POST 201 Created: 자원 생성 성공
  * - GET 200 OK: 조회 성공
  * - GET 404 Not Found: 자원 없음
+ * - GET /search 200 OK: 검색 성공 (결과 배열)
  * - PUT 200 OK: 수정 성공
  * - PUT 404 Not Found: 수정 대상 없음
  * - DELETE 204 No Content: 삭제 성공
@@ -50,6 +53,8 @@ class NoteController(
     private val getNoteUseCase: GetNoteUseCase,
     // port.in 주입: 노트 수정 유스케이스
     private val updateNoteUseCase: UpdateNoteUseCase,
+    // port.in 주입: 노트 검색 유스케이스
+    private val searchNotesUseCase: SearchNotesUseCase,
     // port.in 주입: 노트 삭제 유스케이스
     private val deleteNoteUseCase: DeleteNoteUseCase,
 ) {
@@ -112,6 +117,21 @@ class NoteController(
 
         // 3. 있으면 200 OK로 응답 DTO 반환
         return ResponseEntity.ok(note.toResponse())
+    }
+
+    /**
+     * 키워드로 노트를 검색합니다.
+     *
+     * HTTP 메서드: GET
+     * 경로: /api/v1/notes/search?keyword=...
+     *
+     * @param keyword 검색어
+     * @return 200 OK + 검색 결과 배열
+     */
+    @GetMapping("/search")
+    fun search(@RequestParam keyword: String): ResponseEntity<List<NoteResponse>> {
+        val notes = searchNotesUseCase.search(SearchNotesUseCase.Command(keyword = keyword))
+        return ResponseEntity.ok(notes.map { it.toResponse() })
     }
 
     /**
@@ -230,6 +250,7 @@ private fun Note.toResponse(): NoteResponse = NoteResponse(
     visibility = visibility,
     tags = tags,
 )
+
 
 
 
