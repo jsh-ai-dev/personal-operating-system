@@ -22,6 +22,7 @@ AI 기반의 개인용 지식 관리 및 업무 자동화 시스템입니다.
 
 - `POST /api/v1/notes` - 노트 생성 API
 - `GET /api/v1/notes/{id}` - 노트 조회 API
+- `GET /api/v1/notes/search?keyword=...` - 노트 검색 API
 - `PUT /api/v1/notes/{id}` - 노트 수정 API
 - `DELETE /api/v1/notes/{id}` - 노트 삭제 API
 - 계층화된 패키지 구조 (`domain`, `application`, `adapter`, `infrastructure`)
