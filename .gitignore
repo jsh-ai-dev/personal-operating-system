@@ -43,3 +43,9 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### 로컬 실행 로그 ###
+*.log
+*.err
+verify-*.log
+
