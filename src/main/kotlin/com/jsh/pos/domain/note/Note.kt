@@ -16,13 +16,14 @@ import java.time.Instant
  * - 비즈니스 규칙 검증(blank, trim 등)을 여기서 수행
  */
 data class Note(
-    val id: String,                  // 노트의 고유 ID (UUID)
-    val title: String,               // 노트의 제목
-    val content: String,             // 노트의 본문 (Markdown 형식)
-    val visibility: Visibility,      // 공개/비공개
-    val tags: Set<String>,           // 태그들 (검색/분류용)
-    val createdAt: Instant,          // 작성 시간
-    val updatedAt: Instant,          // 최종 수정 시간
+    val id: String,                      // 노트의 고유 ID (UUID)
+    val title: String,                   // 노트의 제목
+    val content: String,                 // 노트의 본문 (Markdown 형식)
+    val visibility: Visibility,          // 공개/비공개
+    val tags: Set<String>,               // 태그들 (검색/분류용)
+    val bookmarked: Boolean = false,     // 북마크 여부 (기본: false)
+    val createdAt: Instant,              // 작성 시간
+    val updatedAt: Instant,              // 최종 수정 시간
 ) {
     /**
      * 기존 노트를 수정한 새 인스턴스를 반환합니다.
@@ -54,6 +55,20 @@ data class Note(
             updatedAt = now,
         )
     }
+
+    /**
+     * 이 노트를 북마크한 새 인스턴스를 반환합니다.
+     *
+     * 북마크는 "즐겨찾기" 개념이므로 콘텐츠 수정(updatedAt 갱신)과 구분합니다.
+     * - 북마크는 사용자 UI 설정에 가깝고, 노트 내용이 바뀐 것이 아님
+     * - 따라서 updatedAt을 변경하지 않습니다.
+     */
+    fun bookmark(): Note = copy(bookmarked = true)
+
+    /**
+     * 이 노트의 북마크를 해제한 새 인스턴스를 반환합니다.
+     */
+    fun unbookmark(): Note = copy(bookmarked = false)
 
     companion object {
         /**
@@ -99,6 +114,7 @@ data class Note(
                     .map { it.trim() }          // 각 태그의 공백 제거
                     .filter { it.isNotBlank() } // 빈 문자열 제외
                     .toSet(),                   // 중복 제거
+                bookmarked = false,             // 새로 생성한 노트는 항상 북마크 해제 상태
                 createdAt = now,
                 updatedAt = now,
             )

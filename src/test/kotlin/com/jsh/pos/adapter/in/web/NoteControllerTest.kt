@@ -1,7 +1,9 @@
 package com.jsh.pos.adapter.`in`.web
 
+import com.jsh.pos.application.port.`in`.BookmarkNoteUseCase
 import com.jsh.pos.application.port.`in`.CreateNoteUseCase
 import com.jsh.pos.application.port.`in`.DeleteNoteUseCase
+import com.jsh.pos.application.port.`in`.GetBookmarkedNotesUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
 import com.jsh.pos.application.port.`in`.SearchNotesUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
@@ -63,6 +65,13 @@ class NoteControllerTest {
 
     @MockBean
     lateinit var updateNoteUseCase: UpdateNoteUseCase
+
+    // 북마크 관련 Mock 유스케이스
+    @MockBean
+    lateinit var bookmarkNoteUseCase: BookmarkNoteUseCase
+
+    @MockBean
+    lateinit var getBookmarkedNotesUseCase: GetBookmarkedNotesUseCase
 
     /**
      * 테스트: POST /api/v1/notes로 노트를 생성하면 201 Created를 반환하는가?
@@ -257,6 +266,7 @@ class NoteControllerTest {
                     content = "clean architecture",
                     visibility = Visibility.PUBLIC,
                     tags = setOf("kotlin"),
+                    bookmarked = false,
                     createdAt = Instant.now(),
                     updatedAt = Instant.now(),
                 ),
@@ -282,6 +292,101 @@ class NoteControllerTest {
             .andExpect(jsonPath("$.error").value("Bad Request"))
             .andExpect(jsonPath("$.message").value("검색어는 비워둘 수 없습니다"))
             .andExpect(jsonPath("$.path").value("/api/v1/notes/search"))
+    }
+
+    /**
+     * 테스트: GET /api/v1/notes/bookmarks 호출 시 북마크된 노트 목록을 반환하는가?
+     */
+    @Test
+    fun `GET bookmarks returns bookmarked notes`() {
+        given(getBookmarkedNotesUseCase.getBookmarked()).willReturn(
+            listOf(
+                Note(
+                    id = "note-bm-1",
+                    title = "북마크된 메모",
+                    content = "자주 보는 내용",
+                    visibility = Visibility.PRIVATE,
+                    tags = setOf("중요"),
+                    bookmarked = true,
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                ),
+            ),
+        )
+
+        mockMvc.perform(get("/api/v1/notes/bookmarks"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].id").value("note-bm-1"))
+            .andExpect(jsonPath("$[0].bookmarked").value(true))
+    }
+
+    /**
+     * 테스트: POST /api/v1/notes/{id}/bookmark 성공 시 200 OK + bookmarked=true를 반환하는가?
+     */
+    @Test
+    fun `POST bookmark returns 200 with bookmarked true`() {
+        given(bookmarkNoteUseCase.bookmark("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                title = "테스트 메모",
+                content = "내용",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                bookmarked = true,
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(post("/api/v1/notes/note-1/bookmark"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value("note-1"))
+            .andExpect(jsonPath("$.bookmarked").value(true))
+    }
+
+    /**
+     * 테스트: 없는 노트에 북마크하면 404를 반환하는가?
+     */
+    @Test
+    fun `POST bookmark returns 404 when note not found`() {
+        given(bookmarkNoteUseCase.bookmark("missing")).willReturn(null)
+
+        mockMvc.perform(post("/api/v1/notes/missing/bookmark"))
+            .andExpect(status().isNotFound)
+    }
+
+    /**
+     * 테스트: DELETE /api/v1/notes/{id}/bookmark 성공 시 200 OK + bookmarked=false를 반환하는가?
+     */
+    @Test
+    fun `DELETE bookmark returns 200 with bookmarked false`() {
+        given(bookmarkNoteUseCase.unbookmark("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                title = "테스트 메모",
+                content = "내용",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                bookmarked = false,
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(delete("/api/v1/notes/note-1/bookmark"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.bookmarked").value(false))
+    }
+
+    /**
+     * 테스트: 없는 노트의 북마크를 해제하면 404를 반환하는가?
+     */
+    @Test
+    fun `DELETE bookmark returns 404 when note not found`() {
+        given(bookmarkNoteUseCase.unbookmark("missing")).willReturn(null)
+
+        mockMvc.perform(delete("/api/v1/notes/missing/bookmark"))
+            .andExpect(status().isNotFound)
     }
 }
 

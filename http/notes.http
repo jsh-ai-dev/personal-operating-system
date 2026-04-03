@@ -35,4 +35,14 @@ Content-Type: application/json
 ### ✅ 메모 삭제 (id를 실제 값으로 교체)
 DELETE {{baseUrl}}/api/v1/notes/f5af88de-a76d-4f90-a673-4d429ce20e06
 
+### ✅ 북마크 등록 (id를 실제 값으로 교체)
+### 응답: 200 OK + 노트 JSON (bookmarked: true)
+POST {{baseUrl}}/api/v1/notes/f5af88de-a76d-4f90-a673-4d429ce20e06/bookmark
 
+### ✅ 북마크 해제 (id를 실제 값으로 교체)
+### 응답: 200 OK + 노트 JSON (bookmarked: false)
+DELETE {{baseUrl}}/api/v1/notes/f5af88de-a76d-4f90-a673-4d429ce20e06/bookmark
+
+### ✅ 북마크된 메모 목록 조회
+### 응답: 200 OK + 북마크된 노트 배열 (최신 수정순)
+GET {{baseUrl}}/api/v1/notes/bookmarks

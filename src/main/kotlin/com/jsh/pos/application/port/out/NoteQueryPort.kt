@@ -29,6 +29,15 @@ interface NoteQueryPort {
     fun searchByKeyword(keyword: String): List<Note> {
         throw UnsupportedOperationException("searchByKeyword is not implemented")
     }
+
+    /**
+     * 북마크된 노트 목록을 반환합니다.
+     *
+     * 기본 구현은 예외를 던집니다. (어댑터 구현 전 안전장치)
+     */
+    fun findAllBookmarked(): List<Note> {
+        throw UnsupportedOperationException("findAllBookmarked is not implemented")
+    }
 }
 
 

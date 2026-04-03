@@ -56,6 +56,16 @@ class NoteJpaEntity(
     @OrderBy("asc")
     val tags: Set<String>,
 
+    /**
+     * 북마크 여부입니다.
+     *
+     * 기본값이 false이므로 기존 rows는 NULL로 저장될 수 있습니다.
+     * columnDefinition에 DEFAULT FALSE를 지정해 DB 레벨에서도 기본값을 보장합니다.
+     * (ddl-auto: update로 컬럼이 추가될 때 적용됨)
+     */
+    @Column(name = "bookmarked", nullable = false, columnDefinition = "boolean default false")
+    val bookmarked: Boolean = false,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant,
 
@@ -76,6 +86,7 @@ class NoteJpaEntity(
         content = content,
         visibility = visibility,
         tags = tags,
+        bookmarked = bookmarked,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
@@ -93,6 +104,7 @@ class NoteJpaEntity(
             content = note.content,
             visibility = note.visibility,
             tags = note.tags,
+            bookmarked = note.bookmarked,
             createdAt = note.createdAt,
             updatedAt = note.updatedAt,
         )

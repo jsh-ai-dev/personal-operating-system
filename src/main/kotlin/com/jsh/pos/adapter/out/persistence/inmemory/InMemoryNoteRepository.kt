@@ -79,6 +79,14 @@ class InMemoryNoteRepository : NoteCommandPort, NoteQueryPort {
                 note.tags.any { tag -> tag.lowercase().contains(normalized) }
         }
     }
+
+    /**
+     * 북마크된 노트를 최신 수정순으로 반환합니다.
+     */
+    override fun findAllBookmarked(): List<Note> =
+        notes.values
+            .filter { it.bookmarked }
+            .sortedByDescending { it.updatedAt }
 }
 
 

@@ -1,7 +1,9 @@
 package com.jsh.pos.adapter.`in`.web
 
+import com.jsh.pos.application.port.`in`.BookmarkNoteUseCase
 import com.jsh.pos.application.port.`in`.CreateNoteUseCase
 import com.jsh.pos.application.port.`in`.DeleteNoteUseCase
+import com.jsh.pos.application.port.`in`.GetBookmarkedNotesUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
 import com.jsh.pos.application.port.`in`.SearchNotesUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
@@ -39,24 +41,28 @@ import org.springframework.web.bind.annotation.RestController
  * - GET 200 OK: 조회 성공
  * - GET 404 Not Found: 자원 없음
  * - GET /search 200 OK: 검색 성공 (결과 배열)
+ * - GET /bookmarks 200 OK: 북마크 목록 조회 성공
  * - PUT 200 OK: 수정 성공
  * - PUT 404 Not Found: 수정 대상 없음
  * - DELETE 204 No Content: 삭제 성공
  * - DELETE 404 Not Found: 삭제 대상 없음
+ * - POST /{id}/bookmark 200 OK: 북마크 등록 성공
+ * - POST /{id}/bookmark 404 Not Found: 북마크 대상 없음
+ * - DELETE /{id}/bookmark 200 OK: 북마크 해제 성공
+ * - DELETE /{id}/bookmark 404 Not Found: 북마크 해제 대상 없음
  */
 @RestController
 @RequestMapping("/api/v1/notes")
 class NoteController(
-    // port.in 주입: 노트 생성 유스케이스
     private val createNoteUseCase: CreateNoteUseCase,
-    // port.in 주입: 노트 조회 유스케이스
     private val getNoteUseCase: GetNoteUseCase,
-    // port.in 주입: 노트 수정 유스케이스
     private val updateNoteUseCase: UpdateNoteUseCase,
-    // port.in 주입: 노트 검색 유스케이스
     private val searchNotesUseCase: SearchNotesUseCase,
-    // port.in 주입: 노트 삭제 유스케이스
     private val deleteNoteUseCase: DeleteNoteUseCase,
+    // port.in 주입: 북마크 ON/OFF 유스케이스
+    private val bookmarkNoteUseCase: BookmarkNoteUseCase,
+    // port.in 주입: 북마크 목록 조회 유스케이스
+    private val getBookmarkedNotesUseCase: GetBookmarkedNotesUseCase,
 ) {
 
     /**
@@ -193,6 +199,59 @@ class NoteController(
             ResponseEntity.notFound().build()
         }
     }
+
+    /**
+     * 북마크된 노트 목록을 최신 수정순으로 조회합니다.
+     *
+     * HTTP 메서드: GET
+     * 경로: /api/v1/notes/bookmarks
+     *
+     * 주의: Spring MVC는 리터럴 경로(/bookmarks)를 경로 변수(/{id})보다 우선합니다.
+     * 따라서 "bookmarks"가 ID로 오인되지 않습니다.
+     *
+     * @return 200 OK + 북마크된 노트 배열
+     */
+    @GetMapping("/bookmarks")
+    fun getBookmarked(): ResponseEntity<List<NoteResponse>> {
+        val notes = getBookmarkedNotesUseCase.getBookmarked()
+        return ResponseEntity.ok(notes.map { it.toResponse() })
+    }
+
+    /**
+     * 특정 노트에 북마크를 등록합니다.
+     *
+     * HTTP 메서드: POST
+     * 경로: /api/v1/notes/{id}/bookmark
+     *
+     * 왜 POST인가?
+     * - "북마크 자원을 생성"하는 의미로 POST를 씁니다.
+     * - 이미 북마크된 상태에서 다시 호출해도 같은 결과 (멱등)
+     *
+     * @param id 북마크할 노트의 ID
+     * @return 200 OK + 북마크 적용된 노트, 또는 404 Not Found
+     */
+    @PostMapping("/{id}/bookmark")
+    fun bookmark(@PathVariable id: String): ResponseEntity<NoteResponse> {
+        val note = bookmarkNoteUseCase.bookmark(id)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(note.toResponse())
+    }
+
+    /**
+     * 특정 노트의 북마크를 해제합니다.
+     *
+     * HTTP 메서드: DELETE
+     * 경로: /api/v1/notes/{id}/bookmark
+     *
+     * @param id 북마크를 해제할 노트의 ID
+     * @return 200 OK + 북마크 해제된 노트, 또는 404 Not Found
+     */
+    @DeleteMapping("/{id}/bookmark")
+    fun unbookmark(@PathVariable id: String): ResponseEntity<NoteResponse> {
+        val note = bookmarkNoteUseCase.unbookmark(id)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(note.toResponse())
+    }
 }
 
 /**
@@ -249,6 +308,7 @@ data class NoteResponse(
     val content: String,
     val visibility: Visibility,
     val tags: Set<String>,
+    val bookmarked: Boolean,  // 북마크 여부
 )
 
 /**
@@ -265,6 +325,7 @@ private fun Note.toResponse(): NoteResponse = NoteResponse(
     content = content,
     visibility = visibility,
     tags = tags,
+    bookmarked = bookmarked,
 )
 
 
