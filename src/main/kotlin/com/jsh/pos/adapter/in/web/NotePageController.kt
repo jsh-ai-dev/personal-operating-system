@@ -8,6 +8,7 @@ import com.jsh.pos.application.port.`in`.GetBookmarkedNotesUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
 import com.jsh.pos.application.port.`in`.SearchNotesUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
+import com.jsh.pos.domain.note.Note
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import com.jsh.pos.domain.note.Visibility
@@ -21,6 +22,10 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Controller
 @RequestMapping("/notes")
@@ -39,6 +44,7 @@ class NotePageController(
     fun list(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "false") bookmarkedOnly: Boolean,
+        @RequestParam(defaultValue = "recent") sort: String = "recent",
         model: Model,
     ): String {
         val normalizedKeyword = keyword?.trim().orEmpty()
@@ -47,11 +53,16 @@ class NotePageController(
             bookmarkedOnly -> getBookmarkedNotesUseCase.getBookmarked()
             else -> getAllNotesUseCase.getAll()
         }
+        val normalizedSort = normalizeSort(sort)
+        val sortedNotes = sortNotes(notes, normalizedSort)
 
-        model.addAttribute("notes", notes)
+        model.addAttribute("notes", sortedNotes)
         model.addAttribute("keyword", normalizedKeyword)
         model.addAttribute("bookmarkedOnly", bookmarkedOnly)
-        model.addAttribute("tagsDisplayById", notes.associate { it.id to formatTags(it.tags) })
+        model.addAttribute("sort", normalizedSort)
+        model.addAttribute("tagsDisplayById", sortedNotes.associate { it.id to formatTags(it.tags) })
+        model.addAttribute("createdAtDisplayById", sortedNotes.associate { it.id to formatDateTime(it.createdAt) })
+        model.addAttribute("updatedAtDisplayById", sortedNotes.associate { it.id to formatDateTime(it.updatedAt) })
         return "notes/list"
     }
 
@@ -188,6 +199,24 @@ class NotePageController(
             .sortedBy { it.lowercase() }
             .joinToString(", ")
             .ifBlank { "-" }
+
+    private fun normalizeSort(sort: String): String =
+        if (sort.equals("title", ignoreCase = true)) "title" else "recent"
+
+    private fun sortNotes(notes: List<Note>, sort: String): List<Note> =
+        when (sort) {
+            "title" -> notes.sortedBy { it.title.lowercase(Locale.getDefault()) }
+            else -> notes.sortedWith(compareByDescending<Note> { it.updatedAt }.thenByDescending { it.createdAt })
+        }
+
+    private fun formatDateTime(value: Instant): String = DISPLAY_DATE_FORMATTER.format(value)
+
+    companion object {
+        private val DISPLAY_DATE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                .withLocale(Locale.KOREA)
+                .withZone(ZoneId.systemDefault())
+    }
 }
 
 data class NoteForm(

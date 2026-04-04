@@ -3,38 +3,51 @@
 <head th:replace="~{layout/common :: head('노트 목록')}"></head>
 <body>
 <div th:replace="~{layout/common :: header}"></div>
-<h1>노트 목록</h1>
+<main class="site-shell page-stack">
+    <section class="page-title-row">
+        <div>
+            <h1>노트 목록</h1>
+            <p class="subtle">검색과 북마크 필터로 필요한 노트를 빠르게 찾을 수 있어요.</p>
+        </div>
+        <a class="btn btn-primary" href="/notes/new">새 노트 만들기</a>
+    </section>
 
-<div th:if="${message}" class="message" th:text="${message}"></div>
+    <div th:if="${message}" class="message" th:text="${message}"></div>
 
-<div class="actions">
-    <a href="/notes/new">새 노트 만들기</a>
-</div>
+    <form method="get" action="/notes" class="panel search-row">
+        <input class="input" type="text" name="keyword" placeholder="제목/본문 검색" th:value="${keyword}">
+        <select class="input input-inline" name="sort">
+            <option value="recent" th:selected="${sort == 'recent'}">최신 수정순</option>
+            <option value="title" th:selected="${sort == 'title'}">제목순</option>
+        </select>
+        <label class="checkbox-inline">
+            <input type="checkbox" name="bookmarkedOnly" value="true" th:checked="${bookmarkedOnly}">
+            북마크만 보기
+        </label>
+        <button class="btn" type="submit">검색</button>
+        <a class="btn btn-ghost" href="/notes">초기화</a>
+    </form>
 
-<form method="get" action="/notes" class="actions">
-    <input type="text" name="keyword" placeholder="검색어" th:value="${keyword}">
-    <label>
-        <input type="checkbox" name="bookmarkedOnly" value="true" th:checked="${bookmarkedOnly}">
-        북마크만 보기
-    </label>
-    <button type="submit">검색</button>
-    <a href="/notes">초기화</a>
-</form>
-
-<div th:if="${#lists.isEmpty(notes)}" class="empty">아직 노트가 없습니다.</div>
-
-<div th:each="note : ${notes}" class="note-card">
-    <h3>
-        <a th:href="@{|/notes/${note.id}|}" th:text="${note.title}">제목</a>
-        <span th:if="${note.bookmarked}">★</span>
-    </h3>
-    <p th:text="${note.content}">본문</p>
-    <div class="meta">
-        <span th:text="${note.visibility}">PRIVATE</span>
-        <span> | 태그: </span>
-        <span th:text="${tagsDisplayById[note.id]}">-</span>
+    <div th:if="${#lists.isEmpty(notes)}" class="panel empty">
+        아직 노트가 없습니다. 첫 노트를 작성해보세요.
     </div>
-</div>
+
+    <section class="note-grid" th:if="${!#lists.isEmpty(notes)}">
+        <article th:each="note : ${notes}" class="note-card">
+            <div class="note-head">
+                <h2><a th:href="@{|/notes/${note.id}|}" th:text="${note.title}">제목</a></h2>
+                <span class="bookmark" th:if="${note.bookmarked}" title="북마크됨">★</span>
+            </div>
+            <p class="note-content" th:text="${note.content}">본문</p>
+            <div class="meta">
+                <span class="badge" th:text="${note.visibility}">PRIVATE</span>
+                <span th:text="${tagsDisplayById[note.id]}">-</span>
+                <span>생성: <strong th:text="${createdAtDisplayById[note.id]}">-</strong></span>
+                <span>수정: <strong th:text="${updatedAtDisplayById[note.id]}">-</strong></span>
+            </div>
+        </article>
+    </section>
+</main>
 </body>
 </html>
 

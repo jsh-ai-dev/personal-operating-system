@@ -12,6 +12,7 @@ import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.ui.ExtendedModelMap
 import org.springframework.validation.BeanPropertyBindingResult
@@ -77,6 +78,49 @@ class NotePageControllerTest {
         assertEquals("notes/list", viewName)
         assertEquals(1, bookmarkedUseCase.callCount)
         assertEquals(1, (model["notes"] as List<*>).size)
+    }
+
+    @Test
+    fun `list sorts by title when sort is title`() {
+        getAllUseCase.notes = listOf(
+            sampleNote("note-2", "z-title"),
+            sampleNote("note-1", "a-title"),
+        )
+
+        val model = ExtendedModelMap()
+        controller.list(keyword = null, bookmarkedOnly = false, sort = "title", model = model)
+
+        val notes = model["notes"] as List<Note>
+        assertEquals(listOf("note-1", "note-2"), notes.map { it.id })
+        assertEquals("title", model["sort"])
+    }
+
+    @Test
+    fun `list falls back to recent sort and exposes date display maps`() {
+        getAllUseCase.notes = listOf(
+            sampleNote(
+                id = "older",
+                title = "old",
+                updatedAt = Instant.parse("2026-04-01T00:00:00Z"),
+            ),
+            sampleNote(
+                id = "newer",
+                title = "new",
+                updatedAt = Instant.parse("2026-04-02T00:00:00Z"),
+            ),
+        )
+
+        val model = ExtendedModelMap()
+        controller.list(keyword = null, bookmarkedOnly = false, sort = "unknown", model = model)
+
+        val notes = model["notes"] as List<Note>
+        assertEquals(listOf("newer", "older"), notes.map { it.id })
+        assertEquals("recent", model["sort"])
+
+        val createdMap = model["createdAtDisplayById"] as Map<*, *>
+        val updatedMap = model["updatedAtDisplayById"] as Map<*, *>
+        assertTrue(createdMap.containsKey("newer"))
+        assertTrue(updatedMap.containsKey("older"))
     }
 
     @Test
@@ -342,6 +386,8 @@ class NotePageControllerTest {
             title: String,
             bookmarked: Boolean = false,
             tags: Set<String> = emptySet(),
+            createdAt: Instant = Instant.parse("2026-04-01T00:00:00Z"),
+            updatedAt: Instant = Instant.parse("2026-04-01T00:00:00Z"),
         ): Note = Note(
             id = id,
             title = title,
@@ -349,8 +395,8 @@ class NotePageControllerTest {
             visibility = Visibility.PRIVATE,
             tags = tags,
             bookmarked = bookmarked,
-            createdAt = Instant.parse("2026-04-01T00:00:00Z"),
-            updatedAt = Instant.parse("2026-04-01T00:00:00Z"),
+            createdAt = createdAt,
+            updatedAt = updatedAt,
         )
     }
 }

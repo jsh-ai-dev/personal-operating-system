@@ -2,15 +2,22 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${title}">POS Notes</title>
     <link rel="stylesheet" th:href="@{/css/notes.css}">
+    <script defer th:src="@{/js/notes-theme.js}"></script>
 </head>
 <body>
 <div th:fragment="header">
-    <div class="top-nav">
-        <a href="/">홈</a>
-        <a href="/notes">노트 목록</a>
-        <a href="/notes/new">새 노트</a>
+    <div class="site-shell">
+        <header class="site-header">
+            <a class="brand" href="/">Personal OS</a>
+            <nav class="top-nav">
+                <a class="nav-link" href="/notes">노트 목록</a>
+                <a class="nav-link nav-link-primary" href="/notes/new">새 노트</a>
+                <button id="themeToggle" class="btn btn-ghost" type="button" aria-label="테마 전환">다크모드</button>
+            </nav>
+        </header>
     </div>
 </div>
 </body>
