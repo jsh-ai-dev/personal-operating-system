@@ -11,6 +11,7 @@ import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
@@ -42,6 +43,7 @@ import java.time.Instant
  * - .andExpect(): 응답 검증
  */
 @WebMvcTest(NoteController::class)
+@AutoConfigureMockMvc(addFilters = false)
 class NoteControllerTest {
 
     // Spring이 관리하는 MockMvc 인스턴스

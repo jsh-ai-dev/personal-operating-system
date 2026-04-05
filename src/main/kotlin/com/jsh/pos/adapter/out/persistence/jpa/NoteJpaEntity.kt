@@ -37,6 +37,9 @@ class NoteJpaEntity(
     @Column(name = "id", nullable = false, updatable = false, length = 36)
     val id: String,
 
+    @Column(name = "owner_username", nullable = false, length = 100, columnDefinition = "varchar(100) default 'anonymousUser'")
+    val ownerUsername: String,
+
     @Column(name = "title", nullable = false, length = 200)
     val title: String,
 
@@ -82,6 +85,7 @@ class NoteJpaEntity(
      */
     fun toDomain(): Note = Note(
         id = id,
+        ownerUsername = ownerUsername,
         title = title,
         content = content,
         visibility = visibility,
@@ -100,6 +104,7 @@ class NoteJpaEntity(
          */
         fun fromDomain(note: Note): NoteJpaEntity = NoteJpaEntity(
             id = note.id,
+            ownerUsername = note.ownerUsername,
             title = note.title,
             content = note.content,
             visibility = note.visibility,

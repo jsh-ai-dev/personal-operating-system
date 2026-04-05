@@ -223,6 +223,7 @@ class NotePageControllerTest {
 
     @Test
     fun `edit updates and redirects when target exists`() {
+        getUseCase.note = sampleNote("note-1", "기존 제목")
         updateUseCase.nextResult = sampleNote("note-1", "수정된 제목")
         val form = NoteForm(title = "수정된 제목", content = "수정 본문", tagsText = "kotlin, spring, kotlin")
         val bindingResult = BeanPropertyBindingResult(form, "form")
@@ -235,6 +236,7 @@ class NotePageControllerTest {
 
     @Test
     fun `edit returns form when binding has errors`() {
+        getUseCase.note = sampleNote("note-1", "기존 제목")
         val form = NoteForm(title = "", content = "")
         val bindingResult = BeanPropertyBindingResult(form, "form")
         bindingResult.rejectValue("content", "NotBlank")
@@ -260,6 +262,7 @@ class NotePageControllerTest {
 
     @Test
     fun `delete redirects without message when target exists`() {
+        getUseCase.note = sampleNote("note-1", "삭제 대상")
         deleteUseCase.nextDeleted = true
         val redirect = RedirectAttributesModelMap()
 
@@ -282,6 +285,7 @@ class NotePageControllerTest {
 
     @Test
     fun `bookmark redirects to detail when success`() {
+        getUseCase.note = sampleNote("note-1", "북마크 대상")
         bookmarkUseCase.bookmarkResult = sampleNote("note-1", "북마크 대상", bookmarked = true)
         val redirect = RedirectAttributesModelMap()
 
@@ -304,6 +308,7 @@ class NotePageControllerTest {
 
     @Test
     fun `unbookmark redirects to detail when success`() {
+        getUseCase.note = sampleNote("note-1", "북마크 해제 대상", bookmarked = true)
         bookmarkUseCase.unbookmarkResult = sampleNote("note-1", "북마크 해제 대상", bookmarked = false)
         val redirect = RedirectAttributesModelMap()
 

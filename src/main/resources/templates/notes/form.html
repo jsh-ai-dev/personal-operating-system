@@ -10,6 +10,7 @@
           class="panel form-wrap"
           th:action="${mode == 'create'} ? @{/notes} : @{|/notes/${noteId}/edit|}"
           method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <div class="row">
             <label for="title">제목</label>
             <input class="input" id="title" type="text" th:field="*{title}" placeholder="노트 제목을 입력하세요">

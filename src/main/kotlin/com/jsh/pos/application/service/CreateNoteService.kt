@@ -42,6 +42,7 @@ class CreateNoteService(
             visibility = command.visibility,
             tags = command.tags,
             now = clock.instant(),            // 현재 시간 (Clock 의존)
+            ownerUsername = command.ownerUsername,
         )
 
         // 2. 저장소를 통해 영속화 (포트 위임)

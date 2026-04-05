@@ -39,6 +39,7 @@ interface CreateNoteUseCase {
      * @param tags 태그들 (기본값: 빈 집합)
      */
     data class Command(
+        val ownerUsername: String = "anonymousUser",
         val title: String,
         val content: String,
         val visibility: Visibility = Visibility.PRIVATE,

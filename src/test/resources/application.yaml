@@ -17,3 +17,10 @@ spring:
     init:
       mode: never
 
+pos:
+  auth:
+    seed:
+      username: pos-admin
+      password: pos-admin1234
+      role: ROLE_USER
+

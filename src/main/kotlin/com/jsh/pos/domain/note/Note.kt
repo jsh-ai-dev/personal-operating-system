@@ -17,6 +17,7 @@ import java.time.Instant
  */
 data class Note(
     val id: String,                      // 노트의 고유 ID (UUID)
+    val ownerUsername: String = "anonymousUser", // 노트 소유자(로그인 사용자명)
     val title: String,                   // 노트의 제목
     val content: String,                 // 노트의 본문 (Markdown 형식)
     val visibility: Visibility,          // 공개/비공개
@@ -95,6 +96,7 @@ data class Note(
             visibility: Visibility,
             tags: Set<String>,
             now: Instant,
+            ownerUsername: String = "anonymousUser",
         ): Note {
             // [3-POST] 생성 시 도메인 규칙이 실제로 적용되는 지점입니다.
             // 브레이크포인트 추천: 공백 제거, 빈 문자열 검증, 태그 정제 결과 확인
@@ -106,6 +108,7 @@ data class Note(
 
             return Note(
                 id = id,
+                ownerUsername = ownerUsername.trim().ifBlank { "anonymousUser" },
                 title = title.trim(),           // 앞뒤 공백 제거
                 content = content.trim(),       // 앞뒤 공백 제거
                 visibility = visibility,
