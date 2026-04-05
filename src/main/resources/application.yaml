@@ -1,6 +1,11 @@
 spring:
   application:
     name: personal-operating-system
+  servlet:
+    multipart:
+      # 파일 업로드 크기 제한 (MVP: txt 100KB 이하만 허용)
+      max-file-size: 100KB
+      max-request-size: 110KB
   datasource:
     # 환경변수가 없으면 로컬 PostgreSQL 기본값을 사용합니다.
     # 사용자 입장에서는 Docker나 로컬 설치 DB를 바로 연결해볼 수 있습니다.
@@ -30,4 +35,13 @@ pos:
       username: ${POS_SECURITY_USERNAME:pos-admin}
       password: ${POS_SECURITY_PASSWORD:pos-admin1234}
       role: ${POS_SECURITY_ROLE:ROLE_USER}
+  ai:
+    openai:
+      # OpenAI API 키: OPENAI_API_KEY 환경변수로 주입하세요.
+      # 예) $env:OPENAI_API_KEY="sk-..." 후 서버 재시작
+      api-key: ${OPENAI_API_KEY:}
+      # 사용할 모델 (gpt-4o-mini: 빠르고 저렴, 요약 품질 충분)
+      model: ${OPENAI_MODEL:gpt-4o-mini}
+      # 응답 최대 토큰 수 (요약이므로 600으로 충분)
+      max-tokens: ${OPENAI_MAX_TOKENS:600}
 

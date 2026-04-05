@@ -436,6 +436,86 @@ label {
 	margin-top: 6px;
 }
 
+/* ── AI 요약 업로드 화면 ── */
+
+.message-error {
+	color: #991b1b;
+	background: #fee2e2;
+	border-color: #fca5a5;
+}
+
+.upload-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.upload-drop-zone {
+	border: 2px dashed var(--line);
+	border-radius: 12px;
+	padding: 40px 20px;
+	text-align: center;
+	cursor: pointer;
+	transition: border-color 0.2s, background 0.2s;
+	position: relative;
+}
+
+.upload-drop-zone:hover,
+.upload-drop-zone.drag-over {
+	border-color: var(--primary);
+	background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+
+.upload-icon {
+	font-size: 2.5rem;
+	margin-bottom: 8px;
+}
+
+.upload-hint {
+	margin: 0 0 6px;
+	color: var(--text);
+}
+
+.upload-limit {
+	margin: 0;
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+
+.upload-input {
+	display: none;
+}
+
+.upload-selected {
+	margin: 10px 0 0;
+	font-size: 0.88rem;
+	color: var(--primary);
+	font-weight: 600;
+}
+
+.summary-result {
+	border-left: 4px solid var(--primary);
+}
+
+.result-meta {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.summary-box {
+	background: var(--bg);
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	padding: 20px 24px;
+	font-size: 1rem;
+	line-height: 1.8;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* ── 반응형 ── */
 @media (max-width: 720px) {
 	.site-header,
 	.page-title-row {

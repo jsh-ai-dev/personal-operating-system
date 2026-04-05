@@ -24,6 +24,7 @@ class SecurityConfig {
                     .requestMatchers("/", "/login", "/hello", "/css/**", "/js/**", "/error").permitAll()
                     .requestMatchers("/api/**").permitAll()
                     .requestMatchers("/notes/**").authenticated()
+                    .requestMatchers("/summary/**").authenticated()
                     .anyRequest().permitAll()
             }
             .formLogin {

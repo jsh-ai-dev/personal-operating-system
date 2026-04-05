@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/common :: head('AI 요약')}"></head>
+<body>
+<div th:replace="~{layout/common :: header}"></div>
+<main class="site-shell page-stack">
+
+    <!-- 페이지 제목 -->
+    <section class="page-title-row">
+        <div>
+            <h1>AI 요약</h1>
+            <p class="subtle">텍스트 파일(.txt)을 업로드하면 AI가 핵심 내용을 3줄로 요약해줍니다.</p>
+        </div>
+    </section>
+
+    <!-- 오류 메시지 -->
+    <div th:if="${error}" class="message message-error" th:text="${error}"></div>
+
+    <!-- 업로드 폼 -->
+    <section class="panel">
+        <h2 class="panel-title">파일 업로드</h2>
+        <form method="post" action="/summary/upload" enctype="multipart/form-data" class="upload-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <div class="upload-drop-zone" id="dropZone">
+                <div class="upload-icon">📄</div>
+                <p class="upload-hint">파일을 여기에 끌어다 놓거나<br><strong>클릭해서 선택</strong>하세요</p>
+                <p class="upload-limit">지원 형식: .txt &nbsp;|&nbsp; 최대 크기: 100KB</p>
+                <input type="file" name="file" id="fileInput" accept=".txt" class="upload-input">
+                <p class="upload-selected" id="selectedFileName"></p>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit" id="submitBtn">✨ AI 요약 시작</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- 요약 결과 (result가 있을 때만 표시) -->
+    <section class="panel summary-result" th:if="${result}">
+        <h2 class="panel-title">요약 결과</h2>
+
+        <div class="result-meta">
+            <span class="badge">📁 <span th:text="${result.fileName}">파일명</span></span>
+            <span class="badge">📝 원본 <span th:text="${result.originalLength}">0</span>자</span>
+        </div>
+
+        <div class="summary-box" th:text="${result.summary}">
+            요약 내용이 여기에 표시됩니다.
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-ghost" href="/summary">다시 업로드</a>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    // 드래그 앤 드롭 + 파일 선택 피드백
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFileName = document.getElementById('selectedFileName');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            selectedFileName.textContent = '선택된 파일: ' + fileInput.files[0].name;
+        }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            selectedFileName.textContent = '선택된 파일: ' + files[0].name;
+        }
+    });
+</script>
+</body>
+</html>
+
