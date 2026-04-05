@@ -30,6 +30,20 @@
                 <p class="upload-selected" id="selectedFileName"></p>
             </div>
 
+            <fieldset class="model-picker">
+                <legend>요약 모델 선택</legend>
+                <label class="model-option">
+                    <input type="radio" name="modelTier" value="flash"
+                           th:checked="${selectedModelTier == null or selectedModelTier == 'flash'}">
+                    <span><strong>Flash</strong> (빠름, 일상 요약 추천)</span>
+                </label>
+                <label class="model-option">
+                    <input type="radio" name="modelTier" value="pro"
+                           th:checked="${selectedModelTier == 'pro'}">
+                    <span><strong>Pro</strong> (느릴 수 있지만 더 깊은 요약)</span>
+                </label>
+            </fieldset>
+
             <div class="form-actions">
                 <button class="btn btn-primary" type="submit" id="submitBtn">✨ AI 요약 시작</button>
             </div>
@@ -43,6 +57,7 @@
         <div class="result-meta">
             <span class="badge">📁 <span th:text="${result.fileName}">파일명</span></span>
             <span class="badge">📝 원본 <span th:text="${result.originalLength}">0</span>자</span>
+            <span class="badge">🤖 모델 <span th:text="${#strings.toUpperCase(result.modelTier)}">FLASH</span></span>
         </div>
 
         <div class="summary-box" th:text="${result.summary}">

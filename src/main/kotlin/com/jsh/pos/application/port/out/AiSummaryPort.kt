@@ -17,10 +17,11 @@ interface AiSummaryPort {
      * 주어진 텍스트를 AI로 요약합니다.
      *
      * @param text 요약할 원본 텍스트
+     * @param modelTier 화면에서 선택한 모델 티어 (예: flash, pro)
      * @return AI가 생성한 요약문
      * @throws AiSummaryException API 호출 실패 또는 응답 오류 시
      */
-    fun summarize(text: String): String
+    fun summarize(text: String, modelTier: String): String
 }
 
 /**

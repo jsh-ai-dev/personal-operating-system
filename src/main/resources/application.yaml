@@ -36,12 +36,21 @@ pos:
       password: ${POS_SECURITY_PASSWORD:pos-admin1234}
       role: ${POS_SECURITY_ROLE:ROLE_USER}
   ai:
+    # gemini | openai
+    provider: ${POS_AI_PROVIDER:gemini}
+    gemini:
+      # Gemini API 키: GEMINI_API_KEY 환경변수로 주입하세요.
+      # 예) $env:GEMINI_API_KEY="AIza..." 후 서버 재시작
+      api-key: ${GEMINI_API_KEY:}
+      # 화면에서 flash/pro 라디오 선택 시 아래 모델로 매핑됩니다.
+      # 기본값은 flash 모델을 사용합니다. 필요 시 환경변수로 교체하세요.
+      flash-model: ${GEMINI_FLASH_MODEL:gemini-3-flash-preview}
+      pro-model: ${GEMINI_PRO_MODEL:gemini-3.1-pro-preview}
+      # 요약 응답 최대 토큰
+      max-output-tokens: ${GEMINI_MAX_OUTPUT_TOKENS:600}
     openai:
-      # OpenAI API 키: OPENAI_API_KEY 환경변수로 주입하세요.
-      # 예) $env:OPENAI_API_KEY="sk-..." 후 서버 재시작
+      # 필요 시 provider=openai로 바꾸면 이 설정을 사용합니다.
       api-key: ${OPENAI_API_KEY:}
-      # 사용할 모델 (gpt-4o-mini: 빠르고 저렴, 요약 품질 충분)
       model: ${OPENAI_MODEL:gpt-4o-mini}
-      # 응답 최대 토큰 수 (요약이므로 600으로 충분)
       max-tokens: ${OPENAI_MAX_TOKENS:600}
 

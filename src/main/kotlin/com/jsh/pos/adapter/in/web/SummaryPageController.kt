@@ -32,7 +32,10 @@ class SummaryPageController(
 
     /** 파일 업로드 폼 화면을 반환합니다. */
     @GetMapping
-    fun uploadForm(): String = "summary/upload"
+    fun uploadForm(model: Model): String {
+        model.addAttribute("selectedModelTier", DEFAULT_MODEL_TIER)
+        return "summary/upload"
+    }
 
     /**
      * 업로드된 파일을 텍스트로 읽어 AI 요약 결과를 화면에 표시합니다.
@@ -44,8 +47,12 @@ class SummaryPageController(
     @PostMapping("/upload")
     fun upload(
         @RequestParam("file") file: MultipartFile,
+        @RequestParam(name = "modelTier", defaultValue = DEFAULT_MODEL_TIER) modelTier: String,
         model: Model,
     ): String {
+        val normalizedModelTier = normalizeModelTier(modelTier)
+        model.addAttribute("selectedModelTier", normalizedModelTier)
+
         // 1. 파일 비어있는지 확인
         if (file.isEmpty) {
             model.addAttribute("error", "파일을 선택해주세요.")
@@ -81,6 +88,7 @@ class SummaryPageController(
                 SummarizeUseCase.Command(
                     text = text,
                     fileName = originalName,
+                    modelTier = normalizedModelTier,
                 )
             )
         } catch (e: AiSummaryException) {
@@ -96,6 +104,16 @@ class SummaryPageController(
         // 6. 결과를 모델에 담아 같은 템플릿에서 결과 섹션 렌더링
         model.addAttribute("result", result)
         return "summary/upload"
+    }
+
+    private fun normalizeModelTier(modelTier: String): String {
+        val normalized = modelTier.trim().lowercase()
+        return if (normalized in ALLOWED_MODEL_TIERS) normalized else DEFAULT_MODEL_TIER
+    }
+
+    companion object {
+        private const val DEFAULT_MODEL_TIER = "flash"
+        private val ALLOWED_MODEL_TIERS = setOf("flash", "pro")
     }
 }
 

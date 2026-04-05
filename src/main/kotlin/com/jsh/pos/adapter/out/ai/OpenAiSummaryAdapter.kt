@@ -3,6 +3,7 @@ package com.jsh.pos.adapter.out.ai
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.jsh.pos.application.port.out.AiSummaryException
 import com.jsh.pos.application.port.out.AiSummaryPort
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -24,6 +25,7 @@ import org.springframework.web.client.RestClientException
  * - 항상 한국어 3줄 이내 bullet 요약으로 고정
  */
 @Component
+@ConditionalOnProperty(prefix = "pos.ai", name = ["provider"], havingValue = "openai")
 class OpenAiSummaryAdapter(
     @Value("\${pos.ai.openai.api-key:}") private val apiKey: String,
     @Value("\${pos.ai.openai.model:gpt-4o-mini}") private val model: String,
@@ -35,7 +37,7 @@ class OpenAiSummaryAdapter(
         .baseUrl("https://api.openai.com")
         .build()
 
-    override fun summarize(text: String): String {
+    override fun summarize(text: String, modelTier: String): String {
         // 1. API 키 확인: 설정이 없으면 바로 실패 (서버 기동 시점이 아닌 최초 호출 시 검증)
         if (apiKey.isBlank()) {
             throw AiSummaryException(

@@ -493,6 +493,28 @@ label {
 	font-weight: 600;
 }
 
+.model-picker {
+	margin: 0;
+	padding: 12px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	display: grid;
+	gap: 10px;
+}
+
+.model-picker legend {
+	padding: 0 6px;
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+
+.model-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.95rem;
+}
+
 .summary-result {
 	border-left: 4px solid var(--primary);
 }

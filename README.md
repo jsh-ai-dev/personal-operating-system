@@ -79,6 +79,75 @@ $env:POS_SECURITY_ROLE = "ROLE_USER"
 .\gradlew.bat bootRun
 ```
 
+## 환경변수 설정 방법 (PowerShell)
+
+`$env:KEY="value"` 와 `setx KEY "value"`는 용도가 다릅니다.
+
+- `$env:...` : 현재 터미널 세션에서만 유효 (창 닫으면 사라짐)
+- `setx ...` : 사용자 환경변수로 영구 저장 (재부팅/새 터미널에도 유지)
+
+즉, 아래처럼 이해하면 됩니다.
+
+- 빠르게 1회 테스트: `$env:...`
+- 매번 입력하기 귀찮음: `setx ...`
+
+### 1) 세션용(임시) 설정
+
+현재 PowerShell 창에서만 적용됩니다.
+
+```powershell
+$env:GEMINI_API_KEY = "AIza...실제키..."
+$env:POS_AI_PROVIDER = "gemini"
+.\gradlew.bat bootRun
+```
+
+요약 화면(`/summary`)에서는 모델을 라디오 버튼으로 선택할 수 있습니다.
+
+- `Flash` (기본 선택)
+- `Pro`
+
+이 선택은 요청마다 적용되므로, 모델 변경을 위해 서버 재기동할 필요가 없습니다.
+
+> 이 방식은 PC 재부팅 또는 터미널 종료 후 다시 설정해야 합니다.
+
+### 2) 영구 설정 (`setx`)
+
+한 번 저장해두면 새 터미널부터 자동으로 적용됩니다.
+
+```powershell
+setx GEMINI_API_KEY "AIza...실제키..."
+setx POS_AI_PROVIDER "gemini"
+```
+
+적용 확인/실행:
+
+```powershell
+# 새 PowerShell 창을 연 뒤 실행
+echo $env:GEMINI_API_KEY
+echo $env:POS_AI_PROVIDER
+.\gradlew.bat bootRun
+```
+
+### 주의사항
+
+- `setx`는 "현재 창"에는 즉시 반영되지 않습니다. 새 터미널을 열어야 합니다.
+- API 키는 절대 코드나 `application.yaml`에 직접 쓰지 말고 환경변수로만 관리하세요.
+- 실수로 키가 유출되면 즉시 해당 키를 폐기(revoke)하고 새 키를 발급하세요.
+
+### Gemini 모델명 커스터마이즈 (선택)
+
+기본 매핑:
+
+- `Flash` -> `gemini-3-flash-preview`
+- `Pro` -> `gemini-3.1-pro-preview`
+
+원하면 환경변수로 바꿀 수 있습니다.
+
+```powershell
+$env:GEMINI_FLASH_MODEL = "gemini-3-flash-preview"
+$env:GEMINI_PRO_MODEL = "gemini-3.1-pro-preview"
+```
+
 ## PostgreSQL로 실제 저장해보기
 
 기본 실행 설정은 PostgreSQL 기준으로 작성되어 있습니다.
