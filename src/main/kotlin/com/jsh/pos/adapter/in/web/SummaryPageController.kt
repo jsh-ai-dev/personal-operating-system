@@ -2,6 +2,8 @@ package com.jsh.pos.adapter.`in`.web
 
 import com.jsh.pos.application.port.`in`.SummarizeUseCase
 import com.jsh.pos.application.port.out.AiSummaryException
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.text.PDFTextStripper
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,9 +19,9 @@ import org.springframework.web.multipart.MultipartFile
  * - GET  /summary        → 파일 업로드 화면 표시
  * - POST /summary/upload → 파일을 받아 요약 처리 후 결과 화면 표시
  *
- * 보안/검증 정책 (MVP):
- * - 허용 확장자: .txt 만
- * - 허용 MIME:  text/plain 만
+ * 보안/검증 정책 (개발 단계):
+ * - 허용 확장자: .txt, .pdf
+ * - 허용 MIME: text 계열, application/pdf
  * - 최대 크기:  application.yaml의 spring.servlet.multipart 설정으로 통제
  *
  * 처리 방식: 동기 (파일이 작으므로 충분)
@@ -59,26 +61,36 @@ class SummaryPageController(
             return "summary/upload"
         }
 
-        // 2. 확장자 검사: .txt 만 허용
+        // 2. 확장자 검사: .txt/.pdf 만 허용
         val originalName = file.originalFilename ?: ""
-        if (!originalName.endsWith(".txt", ignoreCase = true)) {
-            model.addAttribute("error", "현재 .txt 파일만 지원합니다.")
+        val fileType = detectFileType(originalName)
+        if (fileType == FileType.UNSUPPORTED) {
+            model.addAttribute("error", "현재 .txt 또는 .pdf 파일만 지원합니다.")
             return "summary/upload"
         }
 
-        // 3. MIME 타입 검사: text/plain 만 허용
-        //    확장자 위조(virus.exe → virus.txt) 방어
+        // 3. MIME 타입 검사
+        //    확장자 위조(virus.exe -> virus.txt) 방어
         val contentType = file.contentType ?: ""
-        if (!contentType.startsWith("text/")) {
-            model.addAttribute("error", "텍스트 파일(text/plain)만 업로드할 수 있습니다.")
+        if (!isAllowedMime(contentType, fileType)) {
+            model.addAttribute("error", "파일 형식이 올바르지 않습니다. .txt 또는 .pdf 파일만 업로드할 수 있습니다.")
             return "summary/upload"
         }
 
-        // 4. 텍스트 추출 (UTF-8)
+        // 4. 파일 타입별 텍스트 추출
         val text = try {
-            file.bytes.toString(Charsets.UTF_8)
+            when (fileType) {
+                FileType.TEXT -> file.bytes.toString(Charsets.UTF_8)
+                FileType.PDF -> extractPdfText(file)
+                FileType.UNSUPPORTED -> ""
+            }
         } catch (e: Exception) {
             model.addAttribute("error", "파일을 읽는 중 오류가 발생했습니다: ${e.message}")
+            return "summary/upload"
+        }
+
+        if (text.isBlank()) {
+            model.addAttribute("error", "파일에서 읽을 수 있는 텍스트가 없습니다.")
             return "summary/upload"
         }
 
@@ -111,9 +123,39 @@ class SummaryPageController(
         return if (normalized in ALLOWED_MODEL_TIERS) normalized else DEFAULT_MODEL_TIER
     }
 
+    private fun detectFileType(fileName: String): FileType {
+        val lowerName = fileName.lowercase()
+        return when {
+            lowerName.endsWith(".txt") -> FileType.TEXT
+            lowerName.endsWith(".pdf") -> FileType.PDF
+            else -> FileType.UNSUPPORTED
+        }
+    }
+
+    private fun isAllowedMime(contentType: String, fileType: FileType): Boolean {
+        val normalized = contentType.lowercase()
+        return when (fileType) {
+            FileType.TEXT -> normalized.startsWith("text/") || normalized == "application/octet-stream"
+            FileType.PDF -> normalized == "application/pdf" || normalized == "application/octet-stream"
+            FileType.UNSUPPORTED -> false
+        }
+    }
+
+    private fun extractPdfText(file: MultipartFile): String = file.inputStream.use { input ->
+        PDDocument.load(input).use { document ->
+            PDFTextStripper().getText(document)
+        }
+    }
+
     companion object {
         private const val DEFAULT_MODEL_TIER = "flash"
         private val ALLOWED_MODEL_TIERS = setOf("flash", "pro")
+    }
+
+    private enum class FileType {
+        TEXT,
+        PDF,
+        UNSUPPORTED,
     }
 }
 

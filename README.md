@@ -138,14 +138,15 @@ echo $env:POS_AI_PROVIDER
 
 기본 매핑:
 
-- `Flash` -> `gemini-3-flash-preview`
-- `Pro` -> `gemini-3.1-pro-preview`
+- `Flash` -> `gemini-2.5-flash`
+- `Pro` -> `gemini-2.5-pro`
+
 
 원하면 환경변수로 바꿀 수 있습니다.
 
 ```powershell
-$env:GEMINI_FLASH_MODEL = "gemini-3-flash-preview"
-$env:GEMINI_PRO_MODEL = "gemini-3.1-pro-preview"
+$env:GEMINI_FLASH_MODEL = "gemini-2.5-flash"
+$env:GEMINI_PRO_MODEL = "gemini-2.5-pro"
 ```
 
 ## PostgreSQL로 실제 저장해보기

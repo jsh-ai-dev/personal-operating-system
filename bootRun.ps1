@@ -16,5 +16,10 @@ Get-Content $envFile | Where-Object {
     Write-Host "  [env] $key loaded"
 }
 Write-Host ""
+Write-Host "Effective AI settings:"
+Write-Host "  POS_AI_PROVIDER=$env:POS_AI_PROVIDER"
+Write-Host "  GEMINI_FLASH_MODEL=$env:GEMINI_FLASH_MODEL"
+Write-Host "  GEMINI_PRO_MODEL=$env:GEMINI_PRO_MODEL"
+Write-Host ""
 Write-Host "Starting bootRun..."
 .\gradlew.bat bootRun

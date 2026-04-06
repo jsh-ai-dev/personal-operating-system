@@ -13,7 +13,7 @@ class GeminiModelResolverTest {
             proModel = GeminiModelResolver.DEFAULT_PRO_MODEL,
         )
 
-        assertEquals("gemini-3-flash-preview", actual)
+        assertEquals("gemini-2.5-flash", actual)
     }
 
     @Test
@@ -24,18 +24,18 @@ class GeminiModelResolverTest {
             proModel = GeminiModelResolver.DEFAULT_PRO_MODEL,
         )
 
-        assertEquals("gemini-3.1-pro-preview", actual)
+        assertEquals("gemini-2.5-pro", actual)
     }
 
     @Test
     fun `configured model may include models prefix`() {
         val actual = GeminiModelResolver.resolve(
             modelTier = "flash",
-            flashModel = "models/gemini-3-flash-preview",
+            flashModel = "models/gemini-2.5-flash",
             proModel = GeminiModelResolver.DEFAULT_PRO_MODEL,
         )
 
-        assertEquals("gemini-3-flash-preview", actual)
+        assertEquals("gemini-2.5-flash", actual)
     }
 
     @Test
@@ -46,7 +46,7 @@ class GeminiModelResolverTest {
             proModel = "   ",
         )
 
-        assertEquals("gemini-3.1-pro-preview", actual)
+        assertEquals("gemini-2.5-pro", actual)
     }
 }
 

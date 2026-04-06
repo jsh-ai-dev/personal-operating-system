@@ -9,7 +9,7 @@
     <section class="page-title-row">
         <div>
             <h1>AI 요약</h1>
-            <p class="subtle">텍스트 파일(.txt)을 업로드하면 AI가 핵심 내용을 3줄로 요약해줍니다.</p>
+            <p class="subtle">개발 학습/지식정리용 문서를 업로드하면 AI가 구조화된 학습 노트로 요약해줍니다.</p>
         </div>
     </section>
 
@@ -25,8 +25,8 @@
             <div class="upload-drop-zone" id="dropZone">
                 <div class="upload-icon">📄</div>
                 <p class="upload-hint">파일을 여기에 끌어다 놓거나<br><strong>클릭해서 선택</strong>하세요</p>
-                <p class="upload-limit">지원 형식: .txt &nbsp;|&nbsp; 최대 크기: 100KB</p>
-                <input type="file" name="file" id="fileInput" accept=".txt" class="upload-input">
+                <p class="upload-limit">지원 형식: .txt, .pdf &nbsp;|&nbsp; 최대 크기: 10MB</p>
+                <input type="file" name="file" id="fileInput" accept=".txt,.pdf,application/pdf,text/plain" class="upload-input">
                 <p class="upload-selected" id="selectedFileName"></p>
             </div>
 

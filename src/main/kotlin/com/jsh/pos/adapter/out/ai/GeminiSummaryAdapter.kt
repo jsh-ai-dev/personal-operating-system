@@ -23,7 +23,7 @@ class GeminiSummaryAdapter(
     @Value("\${pos.ai.gemini.api-key:}") private val apiKey: String,
     @Value("\${pos.ai.gemini.flash-model:${GeminiModelResolver.DEFAULT_FLASH_MODEL}}") private val flashModel: String,
     @Value("\${pos.ai.gemini.pro-model:${GeminiModelResolver.DEFAULT_PRO_MODEL}}") private val proModel: String,
-    @Value("\${pos.ai.gemini.max-output-tokens:600}") private val maxOutputTokens: Int,
+    @Value("\${pos.ai.gemini.max-output-tokens:4096}") private val maxOutputTokens: Int,
 ) : AiSummaryPort {
 
     private val restClient = RestClient.builder()
@@ -72,7 +72,7 @@ class GeminiSummaryAdapter(
 
         val response = try {
             restClient.post()
-                .uri("/v1beta/models/$model:generateContent?key=$apiKey")
+                .uri("/v1/models/$model:generateContent?key=$apiKey")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(requestBody)
                 .retrieve()
@@ -100,20 +100,42 @@ class GeminiSummaryAdapter(
 
     companion object {
         private val SYSTEM_PROMPT = """
-            당신은 텍스트를 간결하게 요약하는 AI 어시스턴트입니다.
-            다음 규칙을 반드시 따르세요:
-            1. 항상 한국어로 답변합니다.
-            2. 핵심 내용을 3줄 이내 bullet로 요약합니다.
-            3. 각 줄은 "- " 으로 시작합니다.
-            4. 서론이나 부연 설명 없이 요약 내용만 제공합니다.
+            당신은 개발자의 학습/지식정리를 돕는 기술 요약 어시스턴트입니다.
+            출력은 반드시 한국어 일반 텍스트로 작성하고, 아래 형식을 정확히 지키세요.
+
+            주제 한줄:
+            - 이 문서가 어떤 기술/개념에 대한 내용인지 한 줄로 설명
+
+            왜 필요한가:
+            - 이 기술을 왜 써야 하는지 2~4개 bullet
+            - 기존 방식의 단점과 이 기술이 보완하는 지점을 함께 설명
+
+            한눈에 요약:
+            - 핵심만 4~6개 bullet
+
+            핵심 개념 정리:
+            - 개념명: 설명 형식으로 3~7개 bullet
+
+            실무 적용 포인트:
+            - 바로 적용 가능한 체크리스트 3~5개 bullet
+
+            기술면접 예상 질문과 답변:
+            - 질문: 형식으로 2~3개
+            - 답변: 각 질문에 대해 2~4문장으로 핵심만 설명
+
+            규칙:
+            1. 강조 마크다운(**, `, _, ~)과 코드 펜스는 사용하지 않습니다.
+            2. 목록은 모두 '- '로 시작합니다.
+            3. 원문에 없는 내용을 단정하지 말고, 추론이 필요하면 '(추론)' 표시를 붙입니다.
+            4. 장황한 서론/결론은 금지하고 본문만 출력합니다.
         """.trimIndent()
 
     }
 }
 
 internal object GeminiModelResolver {
-    internal const val DEFAULT_FLASH_MODEL = "gemini-3-flash-preview"
-    internal const val DEFAULT_PRO_MODEL = "gemini-3.1-pro-preview"
+    internal const val DEFAULT_FLASH_MODEL = "gemini-2.5-flash"
+    internal const val DEFAULT_PRO_MODEL = "gemini-2.5-pro"
 
     fun resolve(modelTier: String, flashModel: String, proModel: String): String {
         val configuredModel = when (modelTier.trim().lowercase()) {
@@ -123,7 +145,9 @@ internal object GeminiModelResolver {
         }
 
         return normalize(configuredModel).ifBlank {
-            if (modelTier.trim().lowercase() == "pro") DEFAULT_PRO_MODEL else DEFAULT_FLASH_MODEL
+            normalize(
+                if (modelTier.trim().lowercase() == "pro") DEFAULT_PRO_MODEL else DEFAULT_FLASH_MODEL
+            )
         }
     }
 

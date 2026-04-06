@@ -51,8 +51,8 @@ class SummarizeService(
     }
 
     companion object {
-        // 파일 크기 제한과 별개로, 텍스트 길이도 제한 (토큰 비용 방어)
-        private const val MAX_CHARS = 12_000
+        // 파일 크기 제한과 별개로, 텍스트 길이도 제한 (개발 단계 상향)
+        private const val MAX_CHARS = 120_000
         private const val DEFAULT_MODEL_TIER = "flash"
         private val ALLOWED_MODEL_TIERS = setOf("flash", "pro")
     }

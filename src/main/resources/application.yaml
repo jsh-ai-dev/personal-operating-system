@@ -3,9 +3,9 @@ spring:
     name: personal-operating-system
   servlet:
     multipart:
-      # 파일 업로드 크기 제한 (MVP: txt 100KB 이하만 허용)
-      max-file-size: 100KB
-      max-request-size: 110KB
+      # 파일 업로드 크기 제한 (개발 단계: txt/pdf 최대 10MB)
+      max-file-size: 10MB
+      max-request-size: 11MB
   datasource:
     # 환경변수가 없으면 로컬 PostgreSQL 기본값을 사용합니다.
     # 사용자 입장에서는 Docker나 로컬 설치 DB를 바로 연결해볼 수 있습니다.
@@ -44,13 +44,13 @@ pos:
       api-key: ${GEMINI_API_KEY:}
       # 화면에서 flash/pro 라디오 선택 시 아래 모델로 매핑됩니다.
       # 기본값은 flash 모델을 사용합니다. 필요 시 환경변수로 교체하세요.
-      flash-model: ${GEMINI_FLASH_MODEL:gemini-3-flash-preview}
-      pro-model: ${GEMINI_PRO_MODEL:gemini-3.1-pro-preview}
+      flash-model: ${GEMINI_FLASH_MODEL:gemini-2.5-flash}
+      pro-model: ${GEMINI_PRO_MODEL:gemini-2.5-pro}
       # 요약 응답 최대 토큰
-      max-output-tokens: ${GEMINI_MAX_OUTPUT_TOKENS:1500}
+      max-output-tokens: ${GEMINI_MAX_OUTPUT_TOKENS:4096}
     openai:
       # 필요 시 provider=openai로 바꾸면 이 설정을 사용합니다.
       api-key: ${OPENAI_API_KEY:}
       model: ${OPENAI_MODEL:gpt-4o-mini}
-      max-tokens: ${OPENAI_MAX_TOKENS:600}
+      max-tokens: ${OPENAI_MAX_TOKENS:2048}
 

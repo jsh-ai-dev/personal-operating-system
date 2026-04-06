@@ -25,6 +25,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.apache.pdfbox:pdfbox:2.0.31")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
