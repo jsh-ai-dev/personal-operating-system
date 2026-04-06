@@ -41,6 +41,21 @@ class GeminiSummaryAdapter(
 
         val model = resolveModelName(modelTier)
 
+        val summary = requestSummary(
+            text = text,
+            model = model,
+        )
+
+        return summary ?: throw AiSummaryException(
+            "Gemini 응답에서 요약 결과를 찾을 수 없습니다. " +
+                "필요하면 max-output-tokens 값을 늘려보세요."
+        )
+    }
+
+    private fun requestSummary(
+        text: String,
+        model: String,
+    ): String? {
         val requestBody = GeminiGenerateContentRequest(
             contents = listOf(
                 Content(
@@ -51,7 +66,7 @@ class GeminiSummaryAdapter(
             ),
             generationConfig = GenerationConfig(
                 maxOutputTokens = maxOutputTokens,
-                temperature = 0.2,
+                temperature = 0.0,
             )
         )
 
@@ -74,15 +89,7 @@ class GeminiSummaryAdapter(
             throw AiSummaryException("Gemini API 호출 중 오류가 발생했습니다: ${e.message}", e)
         }
 
-        return response?.candidates
-            ?.firstOrNull()
-            ?.content
-            ?.parts
-            ?.firstOrNull()
-            ?.text
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-            ?: throw AiSummaryException("Gemini 응답에서 요약 결과를 찾을 수 없습니다.")
+        return GeminiResponseExtractor.extractText(response)
     }
 
     private fun resolveModelName(modelTier: String): String = GeminiModelResolver.resolve(
@@ -96,10 +103,11 @@ class GeminiSummaryAdapter(
             당신은 텍스트를 간결하게 요약하는 AI 어시스턴트입니다.
             다음 규칙을 반드시 따르세요:
             1. 항상 한국어로 답변합니다.
-            2. 핵심 내용을 3줄 이내로 요약합니다.
+            2. 핵심 내용을 3줄 이내 bullet로 요약합니다.
             3. 각 줄은 "- " 으로 시작합니다.
             4. 서론이나 부연 설명 없이 요약 내용만 제공합니다.
         """.trimIndent()
+
     }
 }
 
@@ -144,22 +152,36 @@ private data class GenerationConfig(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class GeminiGenerateContentResponse(
+internal data class GeminiGenerateContentResponse(
     val candidates: List<Candidate> = emptyList(),
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class Candidate(
+internal data class Candidate(
     val content: CandidateContent? = null,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class CandidateContent(
+internal data class CandidateContent(
     val parts: List<CandidatePart> = emptyList(),
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-private data class CandidatePart(
+internal data class CandidatePart(
     val text: String? = null,
 )
+
+internal object GeminiResponseExtractor {
+
+    fun extractText(response: GeminiGenerateContentResponse?): String? {
+        val candidate = response?.candidates?.firstOrNull()
+        return candidate?.content
+            ?.parts
+            .orEmpty()
+            .mapNotNull { it.text }
+            .joinToString(separator = "")
+            .trim()
+            .takeIf { it.isNotBlank() }
+    }
+}
 
