@@ -2,6 +2,8 @@ package com.jsh.pos.adapter.out.persistence.jpa
 
 import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
 import jakarta.persistence.ElementCollection
@@ -46,6 +48,9 @@ class NoteJpaEntity(
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     val content: String,
 
+    @Column(name = "ai_summary", nullable = true, columnDefinition = "TEXT")
+    val aiSummary: String? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false, length = 20)
     val visibility: Visibility,
@@ -69,6 +74,23 @@ class NoteJpaEntity(
     @Column(name = "bookmarked", nullable = false, columnDefinition = "boolean default false")
     val bookmarked: Boolean = false,
 
+    /**
+     * 파일 업로드로 생성된 노트의 원본 파일명입니다.
+     * 직접 작성한 노트는 null입니다.
+     */
+    @Column(name = "original_file_name", nullable = true, length = 255)
+    val originalFileName: String? = null,
+
+    @Column(name = "file_content_type", nullable = true, length = 120)
+    val fileContentType: String? = null,
+
+    @Column(name = "has_stored_file", nullable = false, columnDefinition = "boolean default false")
+    val hasStoredFile: Boolean = false,
+
+    @JdbcTypeCode(SqlTypes.VARBINARY)
+    @Column(name = "file_bytes", nullable = true, columnDefinition = "bytea")
+    val fileBytes: ByteArray? = null,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant,
 
@@ -83,14 +105,19 @@ class NoteJpaEntity(
      * - 이미 DB에 저장된 값은 애플리케이션이 과거에 검증한 결과라고 보고,
      *   저장된 값을 그대로 도메인 객체로 복원합니다.
      */
-    fun toDomain(): Note = Note(
+    fun toDomain(includeFileBytes: Boolean = true): Note = Note(
         id = id,
         ownerUsername = ownerUsername,
         title = title,
         content = content,
+        aiSummary = aiSummary,
         visibility = visibility,
         tags = tags,
         bookmarked = bookmarked,
+        originalFileName = originalFileName,
+        fileContentType = fileContentType,
+        hasStoredFile = hasStoredFile,
+        fileBytes = if (includeFileBytes) fileBytes else null,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
@@ -107,9 +134,14 @@ class NoteJpaEntity(
             ownerUsername = note.ownerUsername,
             title = note.title,
             content = note.content,
+            aiSummary = note.aiSummary,
             visibility = note.visibility,
             tags = note.tags,
             bookmarked = note.bookmarked,
+            originalFileName = note.originalFileName,
+            fileContentType = note.fileContentType,
+            hasStoredFile = note.hasStoredFile,
+            fileBytes = note.fileBytes,
             createdAt = note.createdAt,
             updatedAt = note.updatedAt,
         )

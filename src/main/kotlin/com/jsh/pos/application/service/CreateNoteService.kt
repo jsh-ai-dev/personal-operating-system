@@ -43,6 +43,9 @@ class CreateNoteService(
             tags = command.tags,
             now = clock.instant(),            // 현재 시간 (Clock 의존)
             ownerUsername = command.ownerUsername,
+            originalFileName = command.originalFileName,
+            fileContentType = command.fileContentType,
+            fileBytes = command.fileBytes,
         )
 
         // 2. 저장소를 통해 영속화 (포트 위임)

@@ -247,6 +247,12 @@ h1, h2 {
 	gap: 8px;
 }
 
+.note-card-badges {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
 .note-head h2 {
 	font-size: 1.1rem;
 }
@@ -261,6 +267,48 @@ h1, h2 {
 
 .bookmark {
 	color: #f59e0b;
+}
+
+.file-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: #fee2e2;
+	color: #b91c1c;
+	font-weight: 700;
+	font-size: 0.78rem;
+}
+
+.file-badge-txt {
+	background: #e0f2fe;
+	color: #075985;
+}
+
+.summary-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: #ecfccb;
+	color: #3f6212;
+	font-weight: 700;
+	font-size: 0.78rem;
+}
+
+[data-theme='dark'] .file-badge {
+	background: #4c0519;
+	color: #fda4af;
+}
+
+[data-theme='dark'] .file-badge-txt {
+	background: #082f49;
+	color: #bae6fd;
+}
+
+[data-theme='dark'] .summary-badge {
+	background: #1a2e05;
+	color: #bef264;
 }
 
 .note-content {
@@ -442,6 +490,25 @@ label {
 	color: #991b1b;
 	background: #fee2e2;
 	border-color: #fca5a5;
+}
+
+.btn-group {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.upload-label {
+	cursor: pointer;
+}
+
+/* 노트 목록 상단 인라인 업로드 폼 (AI 요약 업로드 폼과 레이아웃 분리) */
+.page-title-row .upload-form {
+	display: inline-flex;
+	flex-direction: row;
+	gap: 0;
+	margin: 0;
 }
 
 .upload-form {

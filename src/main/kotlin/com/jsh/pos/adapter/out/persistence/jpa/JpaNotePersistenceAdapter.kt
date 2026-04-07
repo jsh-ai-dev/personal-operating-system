@@ -46,7 +46,7 @@ class JpaNotePersistenceAdapter(
     @Transactional(readOnly = true)
     override fun findById(id: String): Note? =
         noteJpaRepository.findById(id)
-            .map { it.toDomain() }
+            .map { it.toDomain(includeFileBytes = true) }
             .orElse(null)
 
     /**
@@ -73,7 +73,7 @@ class JpaNotePersistenceAdapter(
     @Transactional(readOnly = true)
     override fun searchByKeyword(keyword: String): List<Note> =
         noteJpaRepository.searchByKeyword(keyword)
-            .map { it.toDomain() }
+            .map { it.toDomain(includeFileBytes = false) }
 
     /**
      * 북마크된 노트 목록을 반환합니다.
@@ -84,7 +84,7 @@ class JpaNotePersistenceAdapter(
     @Transactional(readOnly = true)
     override fun findAllBookmarked(): List<Note> =
         noteJpaRepository.findAllByBookmarkedTrueOrderByCreatedAtDesc()
-            .map { it.toDomain() }
+            .map { it.toDomain(includeFileBytes = false) }
 
     /**
      * 전체 노트 목록을 최신 작성순으로 반환합니다.
@@ -92,5 +92,5 @@ class JpaNotePersistenceAdapter(
     @Transactional(readOnly = true)
     override fun findAll(): List<Note> =
         noteJpaRepository.findAllByOrderByCreatedAtDesc()
-            .map { it.toDomain() }
+            .map { it.toDomain(includeFileBytes = false) }
 }

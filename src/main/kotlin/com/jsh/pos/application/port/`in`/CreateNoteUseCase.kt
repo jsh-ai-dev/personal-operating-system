@@ -44,6 +44,9 @@ interface CreateNoteUseCase {
         val content: String,
         val visibility: Visibility = Visibility.PRIVATE,
         val tags: Set<String> = emptySet(),
+        val originalFileName: String? = null,  // 파일 업로드 시 원본 파일명
+        val fileContentType: String? = null,   // 저장 파일 MIME 타입
+        val fileBytes: ByteArray? = null,      // 저장 파일 원본 바이트
     )
 }
 

@@ -9,7 +9,16 @@
             <h1>노트 목록</h1>
             <p class="subtle">검색과 북마크 필터로 필요한 노트를 빠르게 찾을 수 있어요.</p>
         </div>
-        <a class="btn btn-primary" href="/notes/new">새 노트 만들기</a>
+        <div class="btn-group">
+            <a class="btn btn-primary" href="/notes/new">새 노트 만들기</a>
+            <form method="post" action="/notes/upload" enctype="multipart/form-data" class="upload-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label class="btn btn-ghost upload-label" title=".txt 또는 .pdf 파일을 노트로 가져옵니다">
+                    📂 파일 가져오기
+                    <input type="file" name="file" accept=".txt,.pdf,text/plain,application/pdf" class="upload-input" onchange="this.form.submit()">
+                </label>
+            </form>
+        </div>
     </section>
 
     <div th:if="${message}" class="message" th:text="${message}"></div>
@@ -36,11 +45,20 @@
         <article th:each="note : ${notes}" class="note-card">
             <div class="note-head">
                 <h2><a th:href="@{|/notes/${note.id}|}" th:text="${note.title}">제목</a></h2>
-                <span class="bookmark" th:if="${note.bookmarked}" title="북마크됨">★</span>
+                <div class="note-card-badges">
+                    <span class="file-badge" th:if="${note.hasStoredFile}" title="원본 파일 저장됨">PDF</span>
+                    <span class="file-badge file-badge-txt"
+                          th:if="${note.originalFileName != null and !note.hasStoredFile and #strings.endsWith(#strings.toLowerCase(note.originalFileName), '.txt')}"
+                          title="텍스트 파일 업로드 노트">TXT</span>
+                    <span class="summary-badge" th:if="${note.aiSummary != null}" title="AI 요약 저장됨">요약</span>
+                    <span class="bookmark" th:if="${note.bookmarked}" title="북마크됨">★</span>
+                </div>
             </div>
-            <p class="note-content" th:text="${note.content}">본문</p>
+            <p class="note-content" th:if="${!note.hasStoredFile}" th:text="${note.content}">본문</p>
+            <p class="note-content" th:if="${note.hasStoredFile}">PDF 파일 노트입니다. 상세 화면에서 다운로드할 수 있습니다.</p>
             <div class="meta">
                 <span class="badge" th:text="${note.visibility}">PRIVATE</span>
+                <span th:if="${note.originalFileName != null}">파일: <strong th:text="${note.originalFileName}">-</strong></span>
                 <span th:text="${tagsDisplayById[note.id]}">-</span>
                 <span>생성: <strong th:text="${createdAtDisplayById[note.id]}">-</strong></span>
                 <span>수정: <strong th:text="${updatedAtDisplayById[note.id]}">-</strong></span>
