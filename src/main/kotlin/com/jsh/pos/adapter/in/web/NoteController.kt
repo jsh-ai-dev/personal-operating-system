@@ -104,12 +104,16 @@ class NoteController(
      * }
      */
     @PostMapping
-    fun create(@Valid @RequestBody request: CreateNoteRequest): ResponseEntity<NoteResponse> {
+    fun create(
+        @Valid @RequestBody request: CreateNoteRequest,
+        authentication: Authentication? = null,
+    ): ResponseEntity<NoteResponse> {
         // [1-POST] HTTP 요청이 가장 먼저 들어오는 진입점입니다.
         // 브레이크포인트 추천: request 값(title/content/visibility/tags)이 예상대로 들어오는지 확인
         // 1. 요청 DTO를 유스케이스 Command로 변환
         val note = createNoteUseCase.create(
             CreateNoteUseCase.Command(
+                ownerUsername = currentUsername(authentication),
                 title = request.title,
                 content = request.content,
                 visibility = request.visibility,
@@ -136,7 +140,10 @@ class NoteController(
      * GET /api/v1/notes/550e8400-e29b-41d4-a716-446655440000
      */
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: String): ResponseEntity<NoteResponse> {
+    fun getById(
+        @PathVariable id: String,
+        authentication: Authentication? = null,
+    ): ResponseEntity<NoteResponse> {
         // [1-GET] 단건 조회 요청의 시작점입니다.
         // 브레이크포인트 추천: path variable인 id가 올바른지 확인
         // 1. 유스케이스 호출해 노트 조회
@@ -144,6 +151,11 @@ class NoteController(
 
         // 2. 없으면 404 반환
         ?: return ResponseEntity.notFound().build()
+
+        // 다른 사용자의 노트는 존재를 숨기기 위해 404로 처리합니다.
+        if (note.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
 
         // 3. 있으면 200 OK로 응답 DTO 반환
         // [5-GET] 조회 성공 시 응답을 반환하는 지점입니다.
@@ -190,9 +202,15 @@ class NoteController(
     fun updateById(
         @PathVariable id: String,
         @Valid @RequestBody request: UpdateNoteRequest,
+        authentication: Authentication? = null,
     ): ResponseEntity<NoteResponse> {
         // [1-PUT] 수정 요청의 시작점입니다.
         // 브레이크포인트 추천: id와 request 본문이 함께 올바르게 들어오는지 확인
+        val existing = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (existing.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
         val updated = updateNoteUseCase.updateById(
             id = id,
             command = UpdateNoteUseCase.Command(
@@ -218,9 +236,17 @@ class NoteController(
      * - 대상 없음: 404 Not Found
      */
     @DeleteMapping("/{id}")
-    fun deleteById(@PathVariable id: String): ResponseEntity<Void> {
+    fun deleteById(
+        @PathVariable id: String,
+        authentication: Authentication? = null,
+    ): ResponseEntity<Void> {
         // [1-DELETE] 삭제 요청의 시작점입니다.
         // 브레이크포인트 추천: 삭제 대상 id와 delete 결과(true/false) 분기 확인
+        val existing = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (existing.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
         val deleted = deleteNoteUseCase.deleteById(id)
         return if (deleted) {
             // [5-DELETE] 삭제 성공 시 204 No Content 반환
@@ -272,7 +298,15 @@ class NoteController(
      * @return 200 OK + 북마크 적용된 노트, 또는 404 Not Found
      */
     @PostMapping("/{id}/bookmark")
-    fun bookmark(@PathVariable id: String): ResponseEntity<NoteResponse> {
+    fun bookmark(
+        @PathVariable id: String,
+        authentication: Authentication? = null,
+    ): ResponseEntity<NoteResponse> {
+        val existing = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (existing.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
         val note = bookmarkNoteUseCase.bookmark(id)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(note.toResponse())
@@ -288,7 +322,15 @@ class NoteController(
      * @return 200 OK + 북마크 해제된 노트, 또는 404 Not Found
      */
     @DeleteMapping("/{id}/bookmark")
-    fun unbookmark(@PathVariable id: String): ResponseEntity<NoteResponse> {
+    fun unbookmark(
+        @PathVariable id: String,
+        authentication: Authentication? = null,
+    ): ResponseEntity<NoteResponse> {
+        val existing = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (existing.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
         val note = bookmarkNoteUseCase.unbookmark(id)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(note.toResponse())

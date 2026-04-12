@@ -72,7 +72,22 @@ Redis 목록 캐시를 재사용합니다. 노트 생성/수정/삭제/북마크
   - username: `pos-admin`
   - password: `pos-admin1234`
 - 보호 경로: `/notes/**`
-- 공개 경로: `/login`, `/api/**`, 정적 리소스
+- API 경로: `/api/v1/notes/**`는 인증 필요
+  - 허용 인증 방식: `JSESSIONID`(웹 폼 로그인 세션) 또는 `Authorization: Bearer <JWT>`
+  - JWT principal은 Nest와 동일하게 `sub`(사용자 UUID 문자열)를 사용
+- 공개 경로: `/login`, 정적 리소스
+
+#### JWT 연동 설정 (Nest와 동일 secret)
+
+Spring은 `pos.auth.jwt.secret`(환경변수 `POS_JWT_SECRET`)으로 Bearer 토큰 HS256 검증을 수행합니다.
+
+```powershell
+$env:POS_JWT_SECRET = "nest-backend와-동일한-secret"
+.\gradlew.bat bootRun
+```
+
+> 주의: 기존 세션 로그인 사용자의 principal은 username이고, JWT principal은 `sub`(UUID)입니다.
+> 노트 소유자(`ownerUsername`)를 완전히 통일하려면 기존 데이터의 owner 값 마이그레이션 전략이 필요합니다.
 
 ### 인프라
 - 계층화된 패키지 구조 (`domain`, `application`, `adapter`, `infrastructure`)
@@ -87,6 +102,16 @@ Redis 목록 캐시를 재사용합니다. 노트 생성/수정/삭제/북마크
 - `docs/sprint-1-plan.md` - 1주차 작업 계획
 - `docs/LEARNING_GUIDE.md` - **← 개발 방식/설계 패턴 상세 설명** (필독!)
 - `docs/postgresql-로컬-실행.md` - **← PostgreSQL로 실제 저장해보는 방법**
+- `docs/secrets-commit-checklist.md` - **← 민감정보 커밋 방지 체크리스트**
+
+### pre-commit 훅 (민감정보 자동 차단)
+
+```powershell
+Set-Location "D:\dev\personal-operating-system"
+.\scripts\install-git-hooks.ps1
+```
+
+- `git commit` 전에 `.env` 스테이징/시크릿 문자열 추가를 자동 검사합니다.
 
 ## 테스트 실행
 

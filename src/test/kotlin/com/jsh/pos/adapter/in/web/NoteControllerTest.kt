@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.mockito.BDDMockito.given
@@ -121,6 +122,7 @@ class NoteControllerTest {
         // Arrange (준비): 유스케이스의 동작 설정
         // "어떤 Command가 들어오면 이 Note를 반환해"라고 mock에 지시
         val command = CreateNoteUseCase.Command(
+            ownerUsername = "anonymousUser",
             title = "title",
             content = "content",
             visibility = Visibility.PRIVATE,
@@ -158,6 +160,47 @@ class NoteControllerTest {
             .andExpect(jsonPath("$.title").value("title"))
     }
 
+    @Test
+    @WithMockUser(username = "alice")
+    fun `POST note uses authenticated username as owner`() {
+        val command = CreateNoteUseCase.Command(
+            ownerUsername = "alice",
+            title = "title",
+            content = "content",
+            visibility = Visibility.PRIVATE,
+            tags = setOf("spring"),
+        )
+
+        given(createNoteUseCase.create(command)).willReturn(
+            Note(
+                id = "note-auth-1",
+                title = "title",
+                content = "content",
+                visibility = Visibility.PRIVATE,
+                tags = setOf("spring"),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(
+            post("/api/v1/notes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "title",
+                      "content": "content",
+                      "visibility": "PRIVATE",
+                      "tags": ["spring"]
+                    }
+                    """.trimIndent(),
+                ),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").value("note-auth-1"))
+    }
+
     /**
      * 테스트: GET /api/v1/notes/{id}로 노트를 조회하면 200 OK를 반환하는가?
      *
@@ -189,6 +232,26 @@ class NoteControllerTest {
             .andExpect(jsonPath("$.visibility").value("PUBLIC"))
     }
 
+    @Test
+    @WithMockUser(username = "alice")
+    fun `GET note returns 404 when owner does not match`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "bob",
+                title = "title",
+                content = "content",
+                visibility = Visibility.PUBLIC,
+                tags = setOf("kotlin"),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(get("/api/v1/notes/note-1"))
+            .andExpect(status().isNotFound)
+    }
+
     /**
      * 테스트: PUT /api/v1/notes/{id} 성공 시 200 OK를 반환하는가?
      */
@@ -199,6 +262,19 @@ class NoteControllerTest {
             content = "updated content",
             visibility = Visibility.PUBLIC,
             tags = setOf("updated", "kotlin"),
+        )
+
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "anonymousUser",
+                title = "before",
+                content = "before",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
         )
 
         given(updateNoteUseCase.updateById("note-1", command)).willReturn(
@@ -244,10 +320,43 @@ class NoteControllerTest {
             tags = setOf("updated", "kotlin"),
         )
 
-        given(updateNoteUseCase.updateById("missing-note", command)).willReturn(null)
+        given(getNoteUseCase.getById("missing-note")).willReturn(null)
 
         mockMvc.perform(
             put("/api/v1/notes/missing-note")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "title": "updated title",
+                      "content": "updated content",
+                      "visibility": "PUBLIC",
+                      "tags": ["updated", "kotlin"]
+                    }
+                    """.trimIndent(),
+                ),
+        )
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    fun `PUT note returns 404 when owner does not match`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "bob",
+                title = "before",
+                content = "before",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(
+            put("/api/v1/notes/note-1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -268,6 +377,18 @@ class NoteControllerTest {
      */
     @Test
     fun `DELETE note returns 204 when deleted`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "anonymousUser",
+                title = "title",
+                content = "content",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
         given(deleteNoteUseCase.deleteById("note-1")).willReturn(true)
 
         mockMvc.perform(delete("/api/v1/notes/note-1"))
@@ -279,9 +400,29 @@ class NoteControllerTest {
      */
     @Test
     fun `DELETE note returns 404 when not found`() {
-        given(deleteNoteUseCase.deleteById("missing-note")).willReturn(false)
+        given(getNoteUseCase.getById("missing-note")).willReturn(null)
 
         mockMvc.perform(delete("/api/v1/notes/missing-note"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    fun `DELETE note returns 404 when owner does not match`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "bob",
+                title = "title",
+                content = "content",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(delete("/api/v1/notes/note-1"))
             .andExpect(status().isNotFound)
     }
 
@@ -382,6 +523,19 @@ class NoteControllerTest {
      */
     @Test
     fun `POST bookmark returns 200 with bookmarked true`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "anonymousUser",
+                title = "테스트 메모",
+                content = "내용",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
         given(bookmarkNoteUseCase.bookmark("note-1")).willReturn(
             Note(
                 id = "note-1",
@@ -406,9 +560,29 @@ class NoteControllerTest {
      */
     @Test
     fun `POST bookmark returns 404 when note not found`() {
-        given(bookmarkNoteUseCase.bookmark("missing")).willReturn(null)
+        given(getNoteUseCase.getById("missing")).willReturn(null)
 
         mockMvc.perform(post("/api/v1/notes/missing/bookmark"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    fun `POST bookmark returns 404 when owner does not match`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "bob",
+                title = "테스트 메모",
+                content = "내용",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(post("/api/v1/notes/note-1/bookmark"))
             .andExpect(status().isNotFound)
     }
 
@@ -417,6 +591,19 @@ class NoteControllerTest {
      */
     @Test
     fun `DELETE bookmark returns 200 with bookmarked false`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "anonymousUser",
+                title = "테스트 메모",
+                content = "내용",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
         given(bookmarkNoteUseCase.unbookmark("note-1")).willReturn(
             Note(
                 id = "note-1",
@@ -440,9 +627,29 @@ class NoteControllerTest {
      */
     @Test
     fun `DELETE bookmark returns 404 when note not found`() {
-        given(bookmarkNoteUseCase.unbookmark("missing")).willReturn(null)
+        given(getNoteUseCase.getById("missing")).willReturn(null)
 
         mockMvc.perform(delete("/api/v1/notes/missing/bookmark"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    fun `DELETE bookmark returns 404 when owner does not match`() {
+        given(getNoteUseCase.getById("note-1")).willReturn(
+            Note(
+                id = "note-1",
+                ownerUsername = "bob",
+                title = "테스트 메모",
+                content = "내용",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(delete("/api/v1/notes/note-1/bookmark"))
             .andExpect(status().isNotFound)
     }
 }

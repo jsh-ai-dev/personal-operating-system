@@ -1,5 +1,7 @@
 package com.jsh.pos.adapter.`in`.web
 
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.SignatureAlgorithm
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -12,13 +14,20 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.view
+import javax.crypto.spec.SecretKeySpec
 
-@SpringBootTest
+@SpringBootTest(
+    properties = [
+        "pos.auth.jwt.secret=test-jwt-secret-test-jwt-secret-1234",
+    ],
+)
 @AutoConfigureMockMvc
 class AuthenticationFlowTest {
 
     @Autowired
     lateinit var mockMvc: MockMvc
+
+    private val jwtSecret = "test-jwt-secret-test-jwt-secret-1234"
 
     @Test
     fun `GET login returns login page`() {
@@ -74,6 +83,27 @@ class AuthenticationFlowTest {
         )
             .andExpect(status().is3xxRedirection)
             .andExpect(redirectedUrl("/login?logout"))
+    }
+
+    @Test
+    fun `GET notes api returns 401 when unauthenticated`() {
+        mockMvc.perform(get("/api/v1/notes"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `GET notes api returns 200 when bearer token is valid`() {
+        val key = SecretKeySpec(jwtSecret.toByteArray(Charsets.UTF_8), "HmacSHA256")
+        val token = Jwts.builder()
+            .setSubject("93b4f470-7f26-4a3d-a3f7-1e0cc5485af1")
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact()
+
+        mockMvc.perform(
+            get("/api/v1/notes")
+                .header("Authorization", "Bearer $token"),
+        )
+            .andExpect(status().isOk)
     }
 }
 

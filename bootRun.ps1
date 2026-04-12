@@ -40,6 +40,8 @@ Get-Content $envFile | Where-Object {
     [System.Environment]::SetEnvironmentVariable($key, $value, 'Process')
     Write-Host "  [env] $key loaded"
 }
+
+
 Write-Host ""
 Write-Host "Effective AI settings:"
 Write-Host "  POS_AI_PROVIDER=$env:POS_AI_PROVIDER"

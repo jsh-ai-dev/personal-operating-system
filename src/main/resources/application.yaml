@@ -56,6 +56,9 @@ pos:
       key-prefix: ${POS_NOTE_LIST_CACHE_KEY_PREFIX:pos:notes:list:v1:}
       ttl: ${POS_NOTE_LIST_CACHE_TTL:PT5M}
   auth:
+    jwt:
+      # Nest(auth.service.ts)와 동일한 값으로 맞춰야 Bearer 검증이 성공합니다.
+      secret: ${POS_JWT_SECRET:}
     seed:
       # 서버 시작 시 초기 계정이 없으면 생성되고, 있으면 최소 동기화됩니다.
       username: ${POS_SECURITY_USERNAME:pos-admin}
