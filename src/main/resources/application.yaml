@@ -1,6 +1,6 @@
 spring:
   application:
-    name: personal-operating-system
+    name: personal-operating-system-mk1
   servlet:
     multipart:
       # 파일 업로드 크기 제한 (개발 단계: txt/pdf 최대 10MB)

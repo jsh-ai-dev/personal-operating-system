@@ -40,14 +40,14 @@ Docker Desktop 이 설치되어 있다면 루트의 `compose.yaml`로 PostgreSQL
 먼저 `.env`를 준비하세요. (`.env` 파일은 Git에 커밋되지 않도록 설정되어 있습니다.)
 
 ```powershell
-cd D:\dev\personal-operating-system
+cd D:\dev\personal-operating-system-mk1
 Copy-Item .env.example .env
 ```
 
 그다음 `.env`에서 `POS_DB_PASSWORD`를 본인 로컬 값으로 바꿔주세요.
 
 ```powershell
-cd D:\dev\personal-operating-system
+cd D:\dev\personal-operating-system-mk1
 docker compose up -d
 ```
 
@@ -66,14 +66,14 @@ docker compose up -d
 필요하면 환경변수로 덮어쓸 수 있습니다.
 
 ```powershell
-cd D:\dev\personal-operating-system
+cd D:\dev\personal-operating-system-mk1
 .\gradlew.bat bootRun
 ```
 
 환경변수를 바꿔서 실행하고 싶다면:
 
 ```powershell
-cd D:\dev\personal-operating-system
+cd D:\dev\personal-operating-system-mk1
 $env:POS_DB_URL="jdbc:postgresql://localhost:5432/personal_operating_system"
 $env:POS_DB_USERNAME="pos"
 $env:POS_DB_PASSWORD="pos"
@@ -111,14 +111,14 @@ Invoke-RestMethod -Method Get -Uri "http://localhost:8080/api/v1/notes/search?ke
 DB 클라이언트(DBeaver, Toad) 없이 터미널에서 직접 확인하려면:
 
 ```powershell
-cd D:\dev\personal-operating-system
+cd D:\dev\personal-operating-system-mk1
 .\scripts\db-query.ps1 -Sql "select id, title, visibility, created_at from notes order by created_at desc;"
 ```
 
 태그 테이블 확인:
 
 ```powershell
-cd D:\dev\personal-operating-system
+cd D:\dev\personal-operating-system-mk1
 .\scripts\db-query.ps1 -Sql "select note_id, tag from note_tags order by note_id, tag;"
 ```
 

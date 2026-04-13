@@ -1,1 +1,1 @@
-rootProject.name = "personal-operating-system"
+rootProject.name = "personal-operating-system-mk1"

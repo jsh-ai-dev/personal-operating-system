@@ -1,4 +1,4 @@
-# personal-operating-system
+# personal-operating-system-mk1
 
 AI 기반의 개인용 지식 관리 및 업무 자동화 시스템입니다.
 
@@ -119,7 +119,7 @@ $env:POS_JWT_SECRET = "nest-backend와-동일한-secret"
 ### pre-commit 훅 (민감정보 자동 차단)
 
 ```powershell
-Set-Location "D:\dev\personal-operating-system"
+Set-Location "D:\dev\personal-operating-system-mk1"
 .\scripts\install-git-hooks.ps1
 ```
 

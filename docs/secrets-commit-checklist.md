@@ -19,31 +19,31 @@
 ## 커밋 직전 명령어
 
 ```powershell
-Set-Location "D:\dev\personal-operating-system"
+Set-Location "D:\dev\personal-operating-system-mk1"
 git status --short
 ```
 
 ```powershell
-Set-Location "D:\dev\personal-operating-system"
+Set-Location "D:\dev\personal-operating-system-mk1"
 git --no-pager diff --cached
 ```
 
 ```powershell
-Set-Location "D:\dev\personal-operating-system"
+Set-Location "D:\dev\personal-operating-system-mk1"
 git --no-pager grep -nE "(API[_-]?KEY|SECRET|TOKEN|PASSWORD|POS_JWT_SECRET|GEMINI_API_KEY)=" -- ":(exclude).env" ":(exclude).env.example"
 ```
 
 ## pre-commit 자동 차단 설정
 
 ```powershell
-Set-Location "D:\dev\personal-operating-system"
+Set-Location "D:\dev\personal-operating-system-mk1"
 .\scripts\install-git-hooks.ps1
 ```
 
 설치 후 확인:
 
 ```powershell
-Set-Location "D:\dev\personal-operating-system"
+Set-Location "D:\dev\personal-operating-system-mk1"
 git config --get core.hooksPath
 ```
 
