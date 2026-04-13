@@ -337,68 +337,13 @@ class NotePageController(
         }
 
         val originalName = file.originalFilename ?: ""
-        val fileType = detectFileType(originalName)
-        if (fileType == FileType.UNSUPPORTED) {
-            redirectAttributes.addFlashAttribute("message", "현재 .txt 또는 .pdf 파일만 업로드할 수 있습니다.")
-            return "redirect:/notes"
-        }
-
-        val contentType = file.contentType ?: ""
-        if (!isAllowedMime(contentType, fileType)) {
-            redirectAttributes.addFlashAttribute("message", "파일 형식이 올바르지 않습니다.")
-            return "redirect:/notes"
-        }
-
-        // 파일명에서 확장자 제거 → 노트 제목
-        val title = originalName.substringBeforeLast(".").trim().ifBlank { originalName }
 
         val created = try {
-            when (fileType) {
-                FileType.TEXT -> {
-                    val text = file.bytes.toString(Charsets.UTF_8)
-                    if (text.isBlank()) {
-                        redirectAttributes.addFlashAttribute("message", "파일에 내용이 없습니다.")
-                        return "redirect:/notes"
-                    }
-
-                    createNoteUseCase.create(
-                        CreateNoteUseCase.Command(
-                            ownerUsername = currentUsername(authentication),
-                            title = title,
-                            content = text,
-                            visibility = Visibility.PRIVATE,
-                            tags = emptySet(),
-                            originalFileName = originalName,
-                        ),
-                    )
-                }
-
-                FileType.PDF -> {
-                    val fileBytes = file.bytes
-                    if (fileBytes.isEmpty()) {
-                        redirectAttributes.addFlashAttribute("message", "파일에 내용이 없습니다.")
-                        return "redirect:/notes"
-                    }
-
-                    createNoteUseCase.create(
-                        CreateNoteUseCase.Command(
-                            ownerUsername = currentUsername(authentication),
-                            title = title,
-                            content = buildFilePlaceholderContent(originalName),
-                            visibility = Visibility.PRIVATE,
-                            tags = emptySet(),
-                            originalFileName = originalName,
-                            fileContentType = normalizeContentType(contentType, fileType),
-                            fileBytes = fileBytes,
-                        ),
-                    )
-                }
-
-                FileType.UNSUPPORTED -> {
-                    redirectAttributes.addFlashAttribute("message", "현재 .txt 또는 .pdf 파일만 업로드할 수 있습니다.")
-                    return "redirect:/notes"
-                }
-            }
+            val command = NoteUploadParser.buildCommand(file, currentUsername(authentication))
+            createNoteUseCase.create(command)
+        } catch (e: IllegalArgumentException) {
+            redirectAttributes.addFlashAttribute("message", e.message ?: "업로드할 수 없습니다.")
+            return "redirect:/notes"
         } catch (e: Exception) {
             redirectAttributes.addFlashAttribute("message", "파일을 읽는 중 오류가 발생했습니다: ${e.message}")
             return "redirect:/notes"
@@ -495,33 +440,6 @@ class NotePageController(
             .filter { it.isNotBlank() }
             .toSet()
 
-    private fun detectFileType(fileName: String): FileType {
-        val lowerName = fileName.lowercase()
-        return when {
-            lowerName.endsWith(".txt") -> FileType.TEXT
-            lowerName.endsWith(".pdf") -> FileType.PDF
-            else -> FileType.UNSUPPORTED
-        }
-    }
-
-    private fun isAllowedMime(contentType: String, fileType: FileType): Boolean {
-        val normalized = contentType.lowercase()
-        return when (fileType) {
-            FileType.TEXT -> normalized.startsWith("text/") || normalized == "application/octet-stream"
-            FileType.PDF -> normalized == "application/pdf" || normalized == "application/octet-stream"
-            FileType.UNSUPPORTED -> false
-        }
-    }
-
-    private fun normalizeContentType(contentType: String, fileType: FileType): String = when (fileType) {
-        FileType.TEXT -> if (contentType.isBlank()) "text/plain" else contentType
-        FileType.PDF -> if (contentType.isBlank() || contentType == "application/octet-stream") "application/pdf" else contentType
-        FileType.UNSUPPORTED -> MediaType.APPLICATION_OCTET_STREAM_VALUE
-    }
-
-    private fun buildFilePlaceholderContent(fileName: String): String =
-        "업로드된 PDF 파일 '$fileName' 입니다. 상세 화면에서 다운로드해 확인하세요."
-
     private fun formatTags(tags: Set<String>): String =
         tags
             .map { it.trim() }
@@ -568,12 +486,6 @@ class NotePageController(
                 .withZone(ZoneId.systemDefault())
         private const val DEFAULT_SUMMARY_MODEL_TIER = "flash"
         private val ALLOWED_SUMMARY_MODEL_TIERS = setOf("flash", "pro")
-    }
-
-    private enum class FileType {
-        TEXT,
-        PDF,
-        UNSUPPORTED,
     }
 }
 

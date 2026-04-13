@@ -5,13 +5,18 @@ import com.jsh.pos.application.port.`in`.CreateNoteUseCase
 import com.jsh.pos.application.port.`in`.DeleteNoteUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
 import com.jsh.pos.application.port.`in`.GetNoteListPageUseCase
+import com.jsh.pos.application.port.`in`.SaveNoteSummaryUseCase
+import com.jsh.pos.application.port.`in`.SummarizeUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
+import com.jsh.pos.application.port.out.AiSummaryException
 import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -25,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
+import java.nio.charset.StandardCharsets
 
 /**
  * 노트 REST 컨트롤러입니다.
@@ -64,6 +71,8 @@ class NoteController(
     private val deleteNoteUseCase: DeleteNoteUseCase,
     // port.in 주입: 북마크 ON/OFF 유스케이스
     private val bookmarkNoteUseCase: BookmarkNoteUseCase,
+    private val summarizeUseCase: SummarizeUseCase,
+    private val saveNoteSummaryUseCase: SaveNoteSummaryUseCase,
 ) {
 
     @GetMapping
@@ -133,6 +142,30 @@ class NoteController(
     }
 
     /**
+     * .txt 또는 .pdf 파일을 업로드해 노트를 생성합니다.
+     *
+     * 경로: POST /api/v1/notes/upload
+     * Content-Type: multipart/form-data, 필드명 `file`
+     */
+    @PostMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun upload(
+        @RequestParam("file") file: MultipartFile,
+        authentication: Authentication? = null,
+    ): ResponseEntity<Any> {
+        return try {
+            val command = NoteUploadParser.buildCommand(file, currentUsername(authentication))
+            val note = createNoteUseCase.create(command)
+            ResponseEntity.status(HttpStatus.CREATED).body(note.toResponse())
+        } catch (e: IllegalArgumentException) {
+            val msg = e.message ?: "업로드할 수 없습니다."
+            ResponseEntity.badRequest().body(mapOf("message" to msg))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(mapOf("message" to "파일을 읽는 중 오류가 발생했습니다: ${e.message}"))
+        }
+    }
+
+    /**
      * ID로 노트를 조회합니다.
      *
      * HTTP 메서드: GET
@@ -165,6 +198,41 @@ class NoteController(
         // 3. 있으면 200 OK로 응답 DTO 반환
         // [5-GET] 조회 성공 시 응답을 반환하는 지점입니다.
         return ResponseEntity.ok(note.toResponse())
+    }
+
+    /**
+     * 노트 원본(.txt 본문 내보내기 또는 업로드된 PDF 바이트)을 다운로드합니다.
+     */
+    @GetMapping("/{id}/download")
+    fun download(
+        @PathVariable id: String,
+        authentication: Authentication? = null,
+    ): ResponseEntity<ByteArray> {
+        val note = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (note.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val fileName = note.originalFileName ?: if (note.hasStoredFile) "${note.title}.bin" else "${note.title}.txt"
+        val bytes = if (note.hasStoredFile) {
+            note.fileBytes ?: return ResponseEntity.internalServerError().build()
+        } else {
+            note.content.toByteArray(StandardCharsets.UTF_8)
+        }
+
+        val headers = HttpHeaders()
+        headers.contentType = if (note.hasStoredFile) {
+            MediaType.parseMediaType(note.fileContentType ?: MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        } else {
+            MediaType.parseMediaType("text/plain; charset=UTF-8")
+        }
+        headers.contentDisposition = ContentDisposition.attachment()
+            .filename(fileName, StandardCharsets.UTF_8)
+            .build()
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(bytes)
     }
 
     /**
@@ -349,6 +417,77 @@ class NoteController(
         return ResponseEntity.ok(note.toResponse())
     }
 
+    /**
+     * AI 요약을 생성합니다. (저장은 `/summary/save`로 별도 호출)
+     */
+    @PostMapping("/{id}/summary/generate")
+    fun generateSummary(
+        @PathVariable id: String,
+        @RequestBody(required = false) body: GenerateSummaryRequest?,
+        authentication: Authentication? = null,
+    ): ResponseEntity<Any> {
+        val note = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (note.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val modelTier = NoteSummarySourceText.normalizeModelTier(body?.modelTier ?: "flash")
+        val sourceText = try {
+            NoteSummarySourceText.extract(note)
+        } catch (e: IllegalArgumentException) {
+            val msg = e.message ?: "잘못된 요청입니다."
+            return ResponseEntity.badRequest().body(mapOf("message" to msg))
+        }
+
+        return try {
+            val result = summarizeUseCase.summarize(
+                SummarizeUseCase.Command(
+                    text = sourceText,
+                    fileName = note.originalFileName ?: note.title,
+                    modelTier = modelTier,
+                ),
+            )
+            ResponseEntity.ok(
+                GenerateSummaryResponse(
+                    summary = result.summary,
+                    modelTier = result.modelTier,
+                    originalLength = result.originalLength,
+                ),
+            )
+        } catch (e: AiSummaryException) {
+            val msg = e.message ?: "AI 요약에 실패했습니다."
+            ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(mapOf("message" to msg))
+        }
+    }
+
+    /**
+     * 생성된 요약문을 노트에 저장합니다.
+     */
+    @PostMapping("/{id}/summary/save")
+    fun saveSummary(
+        @PathVariable id: String,
+        @Valid @RequestBody body: SaveSummaryRequest,
+        authentication: Authentication? = null,
+    ): ResponseEntity<Any> {
+        val note = getNoteUseCase.getById(id) ?: return ResponseEntity.notFound().build()
+        if (note.ownerUsername != currentUsername(authentication)) {
+            return ResponseEntity.notFound().build()
+        }
+
+        return try {
+            val saved = saveNoteSummaryUseCase.save(
+                SaveNoteSummaryUseCase.Command(
+                    id = id,
+                    summary = body.summary,
+                ),
+            ) ?: return ResponseEntity.notFound().build()
+            ResponseEntity.ok(saved.toResponse())
+        } catch (e: IllegalArgumentException) {
+            val msg = e.message ?: "저장할 수 없습니다."
+            ResponseEntity.badRequest().body(mapOf("message" to msg))
+        }
+    }
+
     private fun currentUsername(authentication: Authentication?): String {
         val auth = authentication ?: SecurityContextHolder.getContext().authentication
         val isAuthenticated = auth != null && auth.isAuthenticated && auth !is AnonymousAuthenticationToken
@@ -404,6 +543,21 @@ data class UpdateNoteRequest(
     val tags: Set<String> = emptySet(),
 )
 
+data class GenerateSummaryRequest(
+    val modelTier: String? = null,
+)
+
+data class GenerateSummaryResponse(
+    val summary: String,
+    val modelTier: String,
+    val originalLength: Int,
+)
+
+data class SaveSummaryRequest(
+    @field:NotBlank(message = "요약 내용이 필요합니다")
+    val summary: String,
+)
+
 /**
  * 노트 조회/생성 응답 DTO입니다.
  *
@@ -425,6 +579,11 @@ data class NoteResponse(
     val visibility: Visibility,
     val tags: Set<String>,
     val bookmarked: Boolean,  // 북마크 여부
+    val aiSummary: String? = null,
+    /** PDF 등 원본 바이트를 서버에 보관한 노트 */
+    val hasStoredFile: Boolean = false,
+    /** 업로드 시 원본 파일명 (직접 작성 노트는 null) */
+    val originalFileName: String? = null,
 )
 
 /**
@@ -442,6 +601,9 @@ private fun Note.toResponse(): NoteResponse = NoteResponse(
     visibility = visibility,
     tags = tags,
     bookmarked = bookmarked,
+    aiSummary = aiSummary,
+    hasStoredFile = hasStoredFile,
+    originalFileName = originalFileName,
 )
 
 

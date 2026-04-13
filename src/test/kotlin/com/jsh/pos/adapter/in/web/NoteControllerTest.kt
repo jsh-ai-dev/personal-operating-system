@@ -5,6 +5,8 @@ import com.jsh.pos.application.port.`in`.CreateNoteUseCase
 import com.jsh.pos.application.port.`in`.DeleteNoteUseCase
 import com.jsh.pos.application.port.`in`.GetNoteUseCase
 import com.jsh.pos.application.port.`in`.GetNoteListPageUseCase
+import com.jsh.pos.application.port.`in`.SaveNoteSummaryUseCase
+import com.jsh.pos.application.port.`in`.SummarizeUseCase
 import com.jsh.pos.application.port.`in`.UpdateNoteUseCase
 import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
@@ -15,15 +17,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.mockito.BDDMockito.given
+import java.nio.charset.StandardCharsets
 import java.time.Instant
+import kotlin.text.Charsets
 
 /**
  * NoteController의 통합 테스트입니다.
@@ -71,6 +78,12 @@ class NoteControllerTest {
     // 북마크 관련 Mock 유스케이스
     @MockBean
     lateinit var bookmarkNoteUseCase: BookmarkNoteUseCase
+
+    @MockBean
+    lateinit var summarizeUseCase: SummarizeUseCase
+
+    @MockBean
+    lateinit var saveNoteSummaryUseCase: SaveNoteSummaryUseCase
 
             @Test
             fun `GET note list returns notes`() {
@@ -694,6 +707,61 @@ class NoteControllerTest {
 
         mockMvc.perform(delete("/api/v1/notes/note-1/bookmark"))
             .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `POST upload returns 201 for txt file`() {
+        val command = CreateNoteUseCase.Command(
+            ownerUsername = "anonymousUser",
+            title = "hello",
+            content = "hi",
+            visibility = Visibility.PRIVATE,
+            tags = emptySet(),
+            originalFileName = "hello.txt",
+        )
+        given(createNoteUseCase.create(command)).willReturn(
+            Note(
+                id = "note-up-1",
+                ownerUsername = "anonymousUser",
+                title = "hello",
+                content = "hi",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                originalFileName = "hello.txt",
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        val file = MockMultipartFile("file", "hello.txt", "text/plain", "hi".toByteArray(Charsets.UTF_8))
+
+        mockMvc.perform(multipart("/api/v1/notes/upload").file(file))
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").value("note-up-1"))
+            .andExpect(jsonPath("$.originalFileName").value("hello.txt"))
+            .andExpect(jsonPath("$.hasStoredFile").value(false))
+    }
+
+    @Test
+    fun `GET download returns utf8 text for note without stored file`() {
+        given(getNoteUseCase.getById("t1")).willReturn(
+            Note(
+                id = "t1",
+                ownerUsername = "anonymousUser",
+                title = "제목",
+                content = "본문",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                originalFileName = "a.txt",
+                hasStoredFile = false,
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            ),
+        )
+
+        mockMvc.perform(get("/api/v1/notes/t1/download"))
+            .andExpect(status().isOk)
+            .andExpect(content().bytes("본문".toByteArray(StandardCharsets.UTF_8)))
     }
 }
 
