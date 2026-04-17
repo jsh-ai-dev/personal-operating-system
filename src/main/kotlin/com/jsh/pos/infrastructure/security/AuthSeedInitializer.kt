@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional
 class AuthSeedInitializer(
     private val userJpaRepository: UserJpaRepository,
     private val passwordEncoder: PasswordEncoder,
-    @Value("\${pos.auth.seed.username:pos-admin}")
+    @Value("\${pos.auth.seed.username:admin@gmail.com}")
     private val seedUsername: String,
-    @Value("\${pos.auth.seed.password:pos-admin1234}")
+    @Value("\${pos.auth.seed.password:admin123!@#}")
     private val seedPassword: String,
     @Value("\${pos.auth.seed.role:ROLE_USER}")
     private val seedRole: String,

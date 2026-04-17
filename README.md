@@ -81,8 +81,8 @@ Redis 목록 캐시를 재사용합니다. 노트 생성/수정/삭제/북마크
 - 세션 저장소: Redis (`spring-session-data-redis`)
 - 사용자 소스: DB(users 테이블) 기반
 - 초기 계정(seed): 앱 시작 시 없으면 자동 생성
-  - username: `pos-admin`
-  - password: `pos-admin1234`
+  - username: `admin@gmail.com`
+  - password: `admin123!@#`
 - 보호 경로: `/notes/**`
 - API 경로: `/api/v1/notes/**`는 인증 필요
   - 허용 인증 방식: `JSESSIONID`(웹 폼 로그인 세션) 또는 `Authorization: Bearer <JWT>`

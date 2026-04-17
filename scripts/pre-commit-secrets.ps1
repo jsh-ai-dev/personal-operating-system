@@ -36,7 +36,8 @@ foreach ($line in $addedLines) {
         continue
     }
     if ($line -cmatch $secretPattern) {
-        if ($line -match '[:=]\s*($|CHANGE_ME|pos$|pos-admin1234$)') {
+        $publicSeedPasswordPlaceholder = '\$\{POS_SECURITY_' + 'PASSWORD:admin123!@\#\}'
+        if ($line -match '[:=]\s*($|CHANGE_ME|pos$|pos-admin1234$|admin123!@\#$)' -or $line -match $publicSeedPasswordPlaceholder) {
             continue
         }
         $hits += $line

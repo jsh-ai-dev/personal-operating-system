@@ -64,8 +64,8 @@ pos:
       secret: ${POS_JWT_SECRET:}
     seed:
       # 서버 시작 시 초기 계정이 없으면 생성되고, 있으면 최소 동기화됩니다.
-      username: ${POS_SECURITY_USERNAME:pos-admin}
-      password: ${POS_SECURITY_PASSWORD:pos-admin1234}
+      username: ${POS_SECURITY_USERNAME:admin@gmail.com}
+      password: ${POS_SECURITY_PASSWORD:admin123!@#}
       role: ${POS_SECURITY_ROLE:ROLE_USER}
   ai:
     # gemini | openai
