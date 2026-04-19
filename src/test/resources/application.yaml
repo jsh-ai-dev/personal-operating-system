@@ -26,8 +26,8 @@ spring:
 
 pos:
   auth:
-    seed:
-      username: pos-admin
-      password: pos-admin1234
-      role: ROLE_USER
+    jwt:
+      secret: test-jwt-secret-test-jwt-secret-1234
+    service:
+      base-url: http://127.0.0.1:9
 

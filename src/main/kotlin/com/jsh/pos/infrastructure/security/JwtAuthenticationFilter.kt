@@ -13,14 +13,12 @@ import org.springframework.web.filter.OncePerRequestFilter
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * API Bearer 토큰 인증 필터입니다.
- *
- * 주의:
- * - JWT 사용 시 principal은 Nest와 동일하게 sub(UUID)를 사용합니다.
- * - 기존 폼 로그인 principal(사용자명)과 혼용되므로 ownerUsername 마이그레이션 시 값 체계를 통일해야 합니다.
+ * Bearer 헤더 또는 mk1 전용 httpOnly JWT 쿠키로 인증합니다.
+ * principal은 auth-service와 동일하게 `sub`(사용자 UUID 문자열)입니다.
  */
 class JwtAuthenticationFilter(
     private val jwtSecret: String,
+    private val accessTokenCookieName: String,
 ) : OncePerRequestFilter() {
 
     override fun doFilterInternal(
@@ -56,11 +54,16 @@ class JwtAuthenticationFilter(
     }
 
     private fun resolveBearerToken(request: HttpServletRequest): String? {
-        val authorization = request.getHeader("Authorization") ?: return null
-        if (!authorization.startsWith("Bearer ")) {
-            return null
+        val authorization = request.getHeader("Authorization")
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authorization.substringAfter("Bearer ").trim().ifBlank { null }
         }
-        return authorization.substringAfter("Bearer ").trim().ifBlank { null }
+        val cookieToken = request.cookies
+            ?.firstOrNull { it.name == accessTokenCookieName }
+            ?.value
+            ?.trim()
+            ?.ifBlank { null }
+        return cookieToken
     }
 
     private fun shouldAuthenticateWithJwt(): Boolean {

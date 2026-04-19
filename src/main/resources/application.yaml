@@ -60,13 +60,13 @@ pos:
       ttl: ${POS_NOTE_LIST_CACHE_TTL:PT5M}
   auth:
     jwt:
-      # Nest(auth.service.ts)와 동일한 값으로 맞춰야 Bearer 검증이 성공합니다.
+      # mk2 auth-service JWT_SECRET 과 동일해야 Bearer·쿠키 JWT 검증이 성공합니다.
       secret: ${POS_JWT_SECRET:}
-    seed:
-      # 서버 시작 시 초기 계정이 없으면 생성되고, 있으면 최소 동기화됩니다.
-      username: ${POS_SECURITY_USERNAME:admin@gmail.com}
-      password: ${POS_SECURITY_PASSWORD:admin123!@#}
-      role: ${POS_SECURITY_ROLE:ROLE_USER}
+    service:
+      base-url: ${POS_AUTH_SERVICE_URL:http://127.0.0.1:3002}
+    # 로그인 성공 시 httpOnly JWT 쿠키 이름 (JwtAuthenticationFilter 와 동일해야 함)
+    token-cookie-name: ${POS_AUTH_TOKEN_COOKIE:mk1_pos_jwt}
+    token-cookie-max-age-sec: ${POS_AUTH_TOKEN_COOKIE_MAX_AGE_SEC:604800}
   ai:
     # gemini | openai
     provider: ${POS_AI_PROVIDER:gemini}

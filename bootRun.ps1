@@ -37,6 +37,9 @@ Get-Content $envFile | Where-Object {
     $parts = $_ -split '=', 2
     $key   = $parts[0].Trim()
     $value = $parts[1].Trim()
+    if ($value.Length -ge 2 -and $value.StartsWith('"') -and $value.EndsWith('"')) {
+        $value = $value.Substring(1, $value.Length - 2)
+    }
     [System.Environment]::SetEnvironmentVariable($key, $value, 'Process')
     Write-Host "  [env] $key loaded"
 }
