@@ -16,8 +16,8 @@ This folder provides a practical baseline for running `mk1` on Kubernetes withou
 1) Create local secret file (not committed):
 
 ```bash
-cp .env.example .env.local.backup
-# then create k8s/base/secret.yaml with your local values
+cp k8s/base/secret.example.yaml k8s/base/secret.yaml
+# then edit values in secret.yaml
 ```
 
 2) Apply:
