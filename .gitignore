@@ -41,6 +41,7 @@ out/
 .env.*
 !.env.example
 !.env.*.example
+k8s/base/secret.yaml
 
 ### Kotlin ###
 .kotlin
