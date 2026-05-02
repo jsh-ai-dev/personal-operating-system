@@ -1,326 +1,290 @@
-# personal-operating-system-mk1
+# Personal Operating System mk1
 
-AI 기반의 개인용 지식 관리 및 업무 자동화 시스템입니다.
+개인 지식과 업무 메모를 저장하고, 검색하고, AI로 요약하는 Spring Boot 기반 노트 서비스입니다.
+`mk1`은 전체 Personal Operating System 프로젝트의 노트/문서 저장 도메인을 담당하며, 이후 `mk2`의 인증/일정 시스템과 `mk3`의 AI 대화/요약 시스템으로 확장되는 MSA 구조의 첫 번째 서비스입니다.
 
-## 프로젝트 방향
+## 프로젝트 목표
 
-이 프로젝트는 두 가지 목표를 동시에 달성합니다:
+- 개인이 매일 남기는 메모, 학습 자료, PDF 문서를 장기적으로 검색 가능한 지식 저장소로 관리
+- 단순 CRUD가 아니라 인증, 소유권 분리, 파일 업로드, AI 요약, 캐시, 검색 인덱스, 배포 구성을 포함한 실사용 가능한 백엔드 서비스 구현
+- Clean Architecture와 포트/어댑터 구조를 적용해 저장소, 검색 엔진, AI Provider를 교체 가능한 형태로 설계
 
-- 이력서에 포트폴리오로 첨부할 수 있는 데모급 프로젝트
-- 개인의 일상적인 지식 관리와 메모 운영에 장기적으로 사용할 시스템
+## 핵심 기능
 
-## 주요 기술 스택
+- 노트 작성, 수정, 삭제, 상세 조회
+- 태그, 공개 범위, 북마크 관리
+- 사용자별 노트 소유권 분리
+- 페이지네이션, 정렬, 키워드 검색
+- `.txt`, `.pdf` 파일 업로드 및 다운로드
+- PDF 원본 저장 및 PDFBox 기반 텍스트 추출
+- Gemini/OpenAI 기반 AI 요약 생성 및 노트에 저장
+- Redis 기반 세션 저장 및 노트 목록 캐시
+- Elasticsearch 기반 검색 인덱싱, 하이라이트, DB 검색 fallback
+- Thymeleaf 웹 UI와 REST API 동시 제공
+- Docker Compose 및 Kubernetes 배포 구성
 
-- Kotlin, Spring Boot, JPA
-- PostgreSQL, Redis, Elasticsearch
-- Thymeleaf (UI)
-- JUnit (테스트)
+## 기술 스택
 
-## 현재 구현 상태
+| 영역 | 기술 |
+|---|---|
+| Language | Kotlin 2.1, Java 21 |
+| Backend | Spring Boot 3.5, Spring MVC, Spring Security |
+| Persistence | Spring Data JPA, PostgreSQL, H2 test runtime |
+| Cache/Session | Redis, Spring Session |
+| Search | Elasticsearch, Spring Data Elasticsearch |
+| AI | Gemini API, OpenAI API |
+| View | Thymeleaf, CSS, JavaScript |
+| File Processing | Apache PDFBox |
+| Infra | Docker, Docker Compose, Kubernetes, Kustomize |
+| Test | JUnit 5, Spring Boot Test, Spring Security Test, Mockito Kotlin |
 
-Clean Architecture 계층, PostgreSQL 저장 기반, Thymeleaf UI가 준비되었습니다:
+## 시스템 맥락
 
-### REST API
-- `POST /api/v1/notes` - 노트 생성
-- `GET /api/v1/notes` - 노트 목록 조회 (keyword/bookmarkedOnly/sort/page/size)
-- `GET /api/v1/notes/{id}` - 노트 조회
-- `GET /api/v1/notes/search?keyword=...` - 노트 검색 (sort/page/size)
-- `GET /api/v1/notes/bookmarks` - 북마크 목록 조회 (sort/page/size)
-- `PUT /api/v1/notes/{id}` - 노트 수정
-- `DELETE /api/v1/notes/{id}` - 노트 삭제
+이 저장소는 Personal Operating System 시리즈의 `mk1` 서비스입니다.
 
-#### REST 조회 파라미터 예시
+| 프로젝트 | 역할 | 주요 기술 |
+|---|---|---|
+| mk1 | 노트, 파일, AI 요약, 검색 | Kotlin, Spring Boot, PostgreSQL, Redis, Elasticsearch |
+| mk2 | 인증, 일정, 목표, 프론트 통합 게이트웨이 | Next.js, React, NestJS, Prisma, PostgreSQL |
+| mk3 | AI 대화 저장, 요약, 퀴즈, 외부 AI 서비스 연동 | FastAPI, Nuxt, MongoDB, Qdrant |
 
-```powershell
-# 전체 목록 (기본: recent 정렬)
-curl "http://localhost:8080/api/v1/notes"
+`mk1`은 자체 세션 로그인도 지원하지만, `mk2`의 auth-service가 발급한 JWT를 Bearer 토큰 또는 httpOnly 쿠키로 받아 동일한 사용자 `sub` 기준으로 노트 소유권을 분리할 수 있게 설계했습니다.
 
-# 2페이지(0-based)에서 10개씩 조회
-curl "http://localhost:8080/api/v1/notes?page=2&size=10"
+## 아키텍처
 
-# 제목순 정렬
-curl "http://localhost:8080/api/v1/notes?sort=title"
-
-# 북마크만 조회
-curl "http://localhost:8080/api/v1/notes?bookmarkedOnly=true"
-
-# 검색 + 제목순
-curl "http://localhost:8080/api/v1/notes/search?keyword=kotlin&sort=title"
-
-# 검색 + 관련도순 (Elasticsearch 활성화 시 권장)
-curl "http://localhost:8080/api/v1/notes/search?keyword=kotlin&sort=relevance"
-
-# 북마크 API도 동일하게 정렬 파라미터 사용 가능
-curl "http://localhost:8080/api/v1/notes/bookmarks?sort=recent"
+```text
+src/main/kotlin/com/jsh/pos
+├─ domain
+│  └─ note                 # Note, Visibility 등 순수 도메인 모델
+├─ application
+│  ├─ port/in              # 유스케이스 입력 포트
+│  ├─ port/out             # 저장소, 검색, 캐시, AI 출력 포트
+│  └─ service              # 유스케이스 구현
+├─ adapter
+│  ├─ in/web               # REST API, Thymeleaf Controller
+│  └─ out
+│     ├─ ai                # Gemini/OpenAI 요약 어댑터
+│     ├─ persistence       # InMemory/JPA 저장소 어댑터
+│     └─ search            # Elasticsearch 검색 어댑터
+└─ infrastructure
+   ├─ cache                # Redis 목록 캐시
+   ├─ config               # Security, Cache, Clock 설정
+   ├─ search               # 검색 인덱스 재색인 Runner
+   └─ security             # JWT 인증 필터, 원격 로그인 연동
 ```
 
-동일한 사용자/조건(`keyword`, `bookmarkedOnly`, `sort`)으로 반복 조회하면
-Redis 목록 캐시를 재사용합니다. 노트 생성/수정/삭제/북마크/요약 저장 시에는
-관련 캐시가 무효화됩니다.
+설계상 도메인과 유스케이스는 Spring MVC, JPA, Elasticsearch, AI SDK에 직접 의존하지 않습니다.
+외부 시스템은 포트 뒤의 어댑터로 격리해 테스트와 교체가 쉬운 구조를 유지했습니다.
 
-목록/검색/북마크 API 응답 본문은 기존처럼 노트 배열을 유지하고,
-페이지 메타데이터는 응답 헤더로 제공합니다.
+## 주요 구현 포인트
 
-- `X-Page`: 현재 페이지(0-based)
-- `X-Size`: 페이지 크기
-- `X-Total-Elements`: 전체 노트 수
-- `X-Total-Pages`: 전체 페이지 수
-- `X-Has-Previous`, `X-Has-Next`: 이전/다음 페이지 존재 여부
+### 1. 노트 도메인 모델
 
-### Thymeleaf UI
-- `GET /login` - 로그인 페이지 (세션 기반 폼 로그인)
-- `GET /notes` - 노트 목록 (검색, 북마크 필터, 페이지 이동 포함)
-- `GET /notes/new` - 노트 작성 폼
-- `GET /notes/{id}` - 노트 상세
-- `GET /notes/{id}/edit` - 노트 수정 폼
-- `POST /notes/{id}/delete` - 노트 삭제
-- `POST /notes/{id}/bookmark` / `unbookmark` - 북마크 토글
+`Note`는 불변 `data class`로 설계했고, 생성/수정 시 제목과 본문 공백 검증, 태그 정규화, 북마크 상태, AI 요약 저장 규칙을 도메인 메서드에 모았습니다.
 
-### 인증
-- 로그인 방식: Spring Security 세션 로그인
-- 세션 저장소: Redis (`spring-session-data-redis`)
-- 사용자 소스: DB(users 테이블) 기반
-- 초기 계정(seed): 앱 시작 시 없으면 자동 생성
-  - username: `admin@gmail.com`
-  - password: `admin123!@#`
-- 보호 경로: `/notes/**`
-- API 경로: `/api/v1/notes/**`는 인증 필요
-  - 허용 인증 방식: `JSESSIONID`(웹 폼 로그인 세션) 또는 `Authorization: Bearer <JWT>`
-  - JWT principal은 Nest와 동일하게 `sub`(사용자 UUID 문자열)를 사용
-- 공개 경로: `/login`, 정적 리소스
+- `Note.create(...)`: 생성 시 입력 검증과 trim/filter 처리
+- `update(...)`: 본문 수정 시 `updatedAt` 갱신
+- `bookmark()` / `unbookmark()`: 콘텐츠 수정 시간과 북마크 변경을 분리
+- `updateSummary(...)`: AI 요약 저장 시 빈 요약 방지
 
-#### JWT 연동 설정 (Nest와 동일 secret)
+### 2. REST API와 Thymeleaf UI 병행
 
-Spring은 `pos.auth.jwt.secret`(환경변수 `POS_JWT_SECRET`)으로 Bearer 토큰 HS256 검증을 수행합니다.
+외부 서비스 연동을 위한 REST API와 브라우저에서 바로 사용할 수 있는 Thymeleaf UI를 함께 제공합니다.
 
-```powershell
-$env:POS_JWT_SECRET = "nest-backend와-동일한-secret"
-.\gradlew.bat bootRun
-```
+대표 API:
 
-> 주의: 기존 세션 로그인 사용자의 principal은 username이고, JWT principal은 `sub`(UUID)입니다.
-> 노트 소유자(`ownerUsername`)를 완전히 통일하려면 기존 데이터의 owner 값 마이그레이션 전략이 필요합니다.
+| Method | Endpoint | 설명 |
+|---|---|---|
+| GET | `/api/v1/notes` | 노트 목록, 검색어/북마크/정렬/페이지 조건 지원 |
+| POST | `/api/v1/notes` | 노트 생성 |
+| POST | `/api/v1/notes/upload` | txt/pdf 파일 업로드 |
+| GET | `/api/v1/notes/{id}` | 노트 상세 조회 |
+| PUT | `/api/v1/notes/{id}` | 노트 수정 |
+| DELETE | `/api/v1/notes/{id}` | 노트 삭제 |
+| POST | `/api/v1/notes/{id}/bookmark` | 북마크 등록 |
+| DELETE | `/api/v1/notes/{id}/bookmark` | 북마크 해제 |
+| GET | `/api/v1/notes/{id}/download` | 원본 파일 또는 텍스트 다운로드 |
+| POST | `/api/v1/notes/{id}/summary/generate` | AI 요약 생성 |
+| POST | `/api/v1/notes/{id}/summary/save` | 생성된 요약 저장 |
 
-### 인프라
-- 계층화된 패키지 구조 (`domain`, `application`, `adapter`, `infrastructure`)
-- `JpaNotePersistenceAdapter`를 통한 PostgreSQL 저장/조회
-- `note_tags` 분리 테이블 기반 태그 저장
-- TDD 기반 단위 테스트 + 웹 통합 테스트
+웹 UI:
 
-## 기획 문서
+| Endpoint | 설명 |
+|---|---|
+| `/login` | 로그인 화면 |
+| `/notes` | 노트 목록, 검색, 북마크 필터, 페이지 이동 |
+| `/notes/new` | 노트 작성 |
+| `/notes/{id}` | 노트 상세, AI 요약 생성/저장 |
+| `/notes/{id}/edit` | 직접 작성한 노트 수정 |
+| `/summary` | 파일 업로드 기반 단독 요약 화면 |
 
-- `docs/mvp-v1.md` - MVP 범위 및 완료 기준
-- `docs/architecture-draft.md` - 아키텍처 계층 설명
-- `docs/sprint-1-plan.md` - 1주차 작업 계획
-- `docs/LEARNING_GUIDE.md` - **← 개발 방식/설계 패턴 상세 설명** (필독!)
-- `docs/postgresql-로컬-실행.md` - **← PostgreSQL로 실제 저장해보는 방법**
-- `docs/secrets-commit-checklist.md` - **← 민감정보 커밋 방지 체크리스트**
+### 3. 검색과 캐시
 
-### pre-commit 훅 (민감정보 자동 차단)
+목록 조회는 Redis 캐시를 사용합니다.
 
-```powershell
-Set-Location "D:\dev\personal-operating-system-mk1"
-.\scripts\install-git-hooks.ps1
-```
+- 사용자, 조회 모드, 검색어 hash, 정렬, 페이지, 사이즈를 포함한 캐시 키 구성
+- 전체 목록, 검색 목록, 북마크 목록을 mode별로 인덱싱
+- 노트 생성/수정/삭제/북마크/요약 저장 시 해당 사용자의 관련 캐시 무효화
+- TTL 기반 자동 만료
 
-- `git commit` 전에 `.env` 스테이징/시크릿 문자열 추가를 자동 검사합니다.
+검색은 Elasticsearch를 선택적으로 사용합니다.
 
-## 테스트 실행
+- `title`, `tags`, `aiSummary`, `content` 필드에 가중치 적용
+- 검색 결과 하이라이트 제공
+- Elasticsearch 비활성화 또는 장애 시 JPA 기반 DB 검색으로 fallback
+- 시작 시 기존 노트 재색인 옵션 지원
 
-```powershell
-.\gradlew.bat test
-```
+### 4. AI 요약
 
-## 로그인 계정 변경
+AI 요약 기능은 `AiSummaryPort` 뒤에 격리되어 있습니다.
 
-환경변수로 초기 계정(seed) 정보를 바꿀 수 있습니다.
+- Gemini provider: `gemini-2.5-flash`, `gemini-2.5-pro` 기본 매핑
+- OpenAI provider: 환경변수로 모델 교체 가능
+- UI에서 `flash` / `pro` 모델 tier 선택
+- txt/pdf 업로드 문서 요약
+- 노트 상세 화면에서 요약 생성 후 저장
+- AI API 오류를 `AiSummaryException`으로 감싸 컨트롤러에서 명확한 사용자 오류로 변환
 
-> 여기서 `seed`는 CSS 프레임워크 Bootstrap이 아니라,
-> "앱 시작 시 초기 데이터를 넣는 시드 작업"을 의미합니다.
+### 5. 인증과 사용자 분리
 
-```powershell
-$env:POS_SECURITY_USERNAME = "my-admin"
-$env:POS_SECURITY_PASSWORD = "my-secret-password"
-$env:POS_SECURITY_ROLE = "ROLE_USER"
-.\gradlew.bat bootRun
-```
+- 웹 화면은 Spring Security 세션 기반 인증을 사용합니다.
+- 세션은 Redis에 저장해 애플리케이션 재시작과 다중 인스턴스 구성을 고려했습니다.
+- REST API는 stateless JWT 인증을 지원합니다.
+- `Authorization: Bearer <JWT>` 또는 설정된 httpOnly 쿠키에서 토큰을 읽습니다.
+- JWT subject를 사용자 식별자로 사용해 `ownerUsername` 기준으로 노트 접근을 제한합니다.
+- 다른 사용자의 노트는 존재 여부를 노출하지 않도록 404로 처리합니다.
 
-## 환경변수 설정 방법 (PowerShell)
+## 실행 방법
 
-`$env:KEY="value"` 와 `setx KEY "value"`는 용도가 다릅니다.
-
-- `$env:...` : 현재 터미널 세션에서만 유효 (창 닫으면 사라짐)
-- `setx ...` : 사용자 환경변수로 영구 저장 (재부팅/새 터미널에도 유지)
-
-즉, 아래처럼 이해하면 됩니다.
-
-- 빠르게 1회 테스트: `$env:...`
-- 매번 입력하기 귀찮음: `setx ...`
-
-### 1) 세션용(임시) 설정
-
-현재 PowerShell 창에서만 적용됩니다.
-
-```powershell
-$env:GEMINI_API_KEY = "AIza...실제키..."
-$env:POS_AI_PROVIDER = "gemini"
-.\gradlew.bat bootRun
-```
-
-요약 화면(`/summary`)에서는 모델을 라디오 버튼으로 선택할 수 있습니다.
-
-- `Flash` (기본 선택)
-- `Pro`
-
-이 선택은 요청마다 적용되므로, 모델 변경을 위해 서버 재기동할 필요가 없습니다.
-
-> 이 방식은 PC 재부팅 또는 터미널 종료 후 다시 설정해야 합니다.
-
-### 2) 영구 설정 (`setx`)
-
-한 번 저장해두면 새 터미널부터 자동으로 적용됩니다.
-
-```powershell
-setx GEMINI_API_KEY "AIza...실제키..."
-setx POS_AI_PROVIDER "gemini"
-```
-
-적용 확인/실행:
-
-```powershell
-# 새 PowerShell 창을 연 뒤 실행
-echo $env:GEMINI_API_KEY
-echo $env:POS_AI_PROVIDER
-.\gradlew.bat bootRun
-```
-
-### 주의사항
-
-- `setx`는 "현재 창"에는 즉시 반영되지 않습니다. 새 터미널을 열어야 합니다.
-- API 키는 절대 코드나 `application.yaml`에 직접 쓰지 말고 환경변수로만 관리하세요.
-- 실수로 키가 유출되면 즉시 해당 키를 폐기(revoke)하고 새 키를 발급하세요.
-
-## 실행 파일별 역할 정리
-
-헷갈리기 쉬운 파일들의 책임을 아래처럼 구분해서 보면 편합니다.
-
-| 대상 | 역할 | 무엇을 함 | 무엇을 안 함 |
-|---|---|---|---|
-| `compose.yaml` | 인프라 정의 | PostgreSQL, Redis, Elasticsearch 컨테이너를 띄움 | 스프링 앱 설정은 안 함 |
-| `.env` | 값 저장소 | DB 비밀번호, API 키, Redis 호스트 같은 값 보관 | 앱/도커를 직접 실행하진 않음 |
-| `application.yaml` | 스프링 설정 | 앱이 DB/Redis/AI에 어떻게 붙을지 설정 | DB/Redis 컨테이너를 만들진 않음 |
-| `bootRun.ps1` | 실행 보조 스크립트 | `.env`를 읽고 Docker 인프라를 띄운 뒤 `bootRun` 실행 | DB/Redis 설정 자체를 정의하진 않음 |
-| `gradlew.bat bootRun` | 앱 실행 | 스프링 부트 서버 실행 | `.env` 자동 로딩, Docker 인프라 기동은 안 함 |
-
-### 자주 쓰는 실행 흐름
-
-#### 1) 인프라만 먼저 띄우고 싶을 때
-
-```powershell
-.\bootRun.ps1 -InfraOnly
-```
-
-이 명령은 내부적으로 `docker compose up -d postgres redis elasticsearch`를 실행합니다.
-
-#### 2) 평소처럼 앱까지 한 번에 띄우고 싶을 때
-
-```powershell
-.\bootRun.ps1
-```
-
-이 명령은 아래 흐름으로 동작합니다.
-
-1. `docker compose up -d postgres redis elasticsearch`
-2. `.env` 로드
-3. `./gradlew.bat bootRun`
-
-#### 3) 이미 Docker 인프라는 따로 띄워놨고 앱만 실행하고 싶을 때
-
-```powershell
-.\bootRun.ps1 -SkipInfra
-```
-
-### 참고
-
-- Docker Desktop에서 화살표 버튼을 눌러 컨테이너를 시작하는 것도 가능하지만,
-  사실상 커맨드라인의 `docker compose up -d`를 UI로 실행하는 것과 비슷한 개념입니다.
-- 따라서 평소 개발 흐름은 터미널에서 `./bootRun.ps1` 하나로 맞춰두는 쪽이 더 재현성과 편의성이 좋습니다.
-
-### Gemini 모델명 커스터마이즈 (선택)
-
-기본 매핑:
-
-- `Flash` -> `gemini-2.5-flash`
-- `Pro` -> `gemini-2.5-pro`
-
-
-원하면 환경변수로 바꿀 수 있습니다.
-
-```powershell
-$env:GEMINI_FLASH_MODEL = "gemini-2.5-flash"
-$env:GEMINI_PRO_MODEL = "gemini-2.5-pro"
-```
-
-## PostgreSQL로 실제 저장해보기
-
-기본 실행 설정은 PostgreSQL 기준으로 작성되어 있습니다.
-
-1. 환경파일 준비 (`.env`는 Git에 올라가지 않음)
+### 1. 환경 파일 준비
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-2. PostgreSQL 준비
-   - 직접 설치하거나
-   - Docker Desktop이 있다면 루트의 `compose.yaml` 사용 (PostgreSQL + Redis)
-3. 애플리케이션 실행
+주요 환경변수:
+
+```text
+POS_DB_URL=jdbc:postgresql://localhost:5432/pos_mk1
+POS_DB_USERNAME=pos
+POS_DB_PASSWORD=pos
+POS_REDIS_HOST=localhost
+POS_REDIS_PORT=6379
+POS_AI_PROVIDER=gemini
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+POS_JWT_SECRET=
+```
+
+### 2. 인프라와 애플리케이션 함께 실행
 
 ```powershell
 .\bootRun.ps1
 ```
 
-4. 자세한 실행 방법은 `docs/postgresql-로컬-실행.md` 문서 참고
+이 스크립트는 Docker Compose로 PostgreSQL, Redis, Elasticsearch를 올린 뒤 Gradle `bootRun`을 실행합니다.
 
-## Redis 세션 외부화
-
-로그인 세션(`JSESSIONID`)은 애플리케이션 메모리가 아니라 Redis에 저장됩니다.
-
-- 기본 접속값: `localhost:6379`
-- 세션 만료시간: `30m`
-- 설정 위치: `src/main/resources/application.yaml`
-
-`.env`에서 아래 값을 바꿔 Redis 접속 정보를 조정할 수 있습니다.
+### 3. 인프라만 실행
 
 ```powershell
-POS_REDIS_HOST=localhost
-POS_REDIS_PORT=6379
-POS_REDIS_PASSWORD=
-POS_REDIS_NAMESPACE=pos:mk1:session
-POS_NOTE_LIST_CACHE_KEY_PREFIX=pos:mk1:notes:list:v1:
+.\bootRun.ps1 -InfraOnly
 ```
 
-## Elasticsearch 검색 전환
-
-기본값은 DB 검색이며, 아래 환경변수를 켜면 Elasticsearch 우선 검색으로 동작합니다.
+### 4. 이미 인프라가 떠 있을 때 애플리케이션만 실행
 
 ```powershell
+.\bootRun.ps1 -SkipInfra
+```
+
+### 5. Docker Compose 전체 실행
+
+```powershell
+docker compose up -d --build
+```
+
+기본 접속 주소:
+
+- Web UI: `http://localhost:8080`
+- PostgreSQL: `localhost:5432`
+- Redis: `localhost:6379`
+- Elasticsearch: `http://localhost:9200`
+
+## Elasticsearch 활성화
+
+기본값은 DB 검색입니다. Elasticsearch 검색을 사용하려면 다음 값을 설정합니다.
+
+```text
 POS_ELASTICSEARCH_URIS=http://localhost:9200
 POS_SEARCH_ELASTICSEARCH_ENABLED=true
 POS_SEARCH_ELASTICSEARCH_INDEX_NAME=notes-mk1
 POS_SEARCH_ELASTICSEARCH_REINDEX_ON_STARTUP=true
 ```
 
-- Elasticsearch 오류 시 검색은 DB 검색으로 자동 폴백됩니다.
-- 시작 시 기존 노트를 검색 인덱스로 백필(reindex)합니다.
-- `/notes` 검색 결과 카드에 제목/요약/본문 하이라이트 스니펫이 노출됩니다.
+Elasticsearch 호출 실패 시 서비스가 중단되지 않고 DB 검색으로 fallback합니다.
 
-## 시작하기
+## 테스트
 
-이 프로젝트를 이해하려면:
+```powershell
+.\gradlew.bat test
+```
 
-1. `docs/LEARNING_GUIDE.md`를 읽어 전체 구조와 설계 원칙 파악
-2. 각 레이어의 코드를 위에서 아래로(컨트롤러 → 서비스 → 도메인) 읽기
-3. 테스트 코드를 보며 각 계층의 책임 확인
-4. `docs/postgresql-로컬-실행.md`를 보며 인메모리 저장소와 PostgreSQL 저장소 차이 이해
+현재 테스트는 도메인, 유스케이스, JPA Repository, 웹 컨트롤러, 인증 흐름, AI 응답 파서 등을 포함합니다.
 
+주요 테스트 범위:
+
+- `NoteTest`: 도메인 생성/수정/북마크/요약 규칙
+- `CreateNoteServiceTest`, `UpdateNoteServiceTest`, `DeleteNoteServiceTest`: 유스케이스 검증
+- `SearchNotesServiceTest`, `GetNoteListPageServiceTest`: 검색/목록 조건 처리
+- `JpaNoteRepositoryTest`, `JpaNotePersistenceAdapterTest`: JPA 매핑과 저장소 동작
+- `NoteControllerTest`, `NotePageControllerTest`, `AuthenticationFlowTest`: API/UI/인증 흐름
+- `GeminiModelResolverTest`, `GeminiResponseExtractorTest`: AI 어댑터 보조 로직
+
+## 배포 구성
+
+### Docker
+
+멀티 스테이지 Dockerfile을 사용합니다.
+
+- build stage: `eclipse-temurin:21-jdk-alpine`에서 `bootJar` 생성
+- runtime stage: `eclipse-temurin:21-jre-alpine`
+- non-root `app` 사용자로 실행
+- 8080 포트 노출
+
+### Kubernetes
+
+`k8s` 디렉터리에 Kustomize 기반 배포 구성이 포함되어 있습니다.
+
+```text
+k8s/
+├─ base
+│  ├─ app.yaml
+│  ├─ postgres.yaml
+│  ├─ redis.yaml
+│  ├─ configmap.yaml
+│  ├─ secret.example.yaml
+│  └─ ingress.yaml
+└─ overlays/aws
+   ├─ configmap.aws.patch.yaml
+   ├─ ingress.aws.patch.yaml
+   └─ secret.aws.example.yaml
+```
+
+로컬/기본 배포와 AWS 배포 오버레이를 분리해 환경별 설정 차이를 Kustomize patch로 관리합니다.
+
+## 개발 과정에서 중점적으로 다룬 문제
+
+- 단일 CRUD 앱을 넘어 인증, 캐시, 검색, AI, 배포까지 포함한 서비스 경계 설계
+- JPA 저장소와 Elasticsearch 검색을 포트로 분리해 장애 시 fallback 가능한 구조 구성
+- Redis 캐시 키와 무효화 범위를 사용자/조회모드 단위로 설계
+- 세션 인증과 JWT 인증을 함께 지원해 mk2 auth-service와 연동 가능한 구조 구현
+- 파일 업로드 보안 검증, PDF 텍스트 추출, 원본 다운로드 흐름 구현
+- 테스트 가능한 계층 분리를 위해 도메인/유스케이스/어댑터 책임을 분리
+
+## 관련 문서
+
+- `docs/architecture-draft.md`: 초기 아키텍처 설계
+- `docs/mvp-v1.md`: MVP 범위
+- `docs/LEARNING_GUIDE.md`: 학습/설계 메모
+- `docs/ec2-docker-compose.md`: EC2 Docker Compose 배포 메모
+- `docs/secrets-commit-checklist.md`: 민감정보 커밋 방지 체크리스트
+- `k8s/README.md`: Kubernetes 적용 방법
