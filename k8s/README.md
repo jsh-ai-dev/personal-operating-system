@@ -29,7 +29,8 @@ kubectl -n pos-mk1 get all
 
 ## AWS overlay
 
-Use this when DB/Redis are external (RDS/ElastiCache) and only app workloads run on EKS.
+Use this when DB is external (RDS) and app workloads run on EKS.
+Redis/Elasticsearch can run on a separate data-box EC2.
 
 1) Prepare overlay secret:
 
@@ -50,9 +51,11 @@ kubectl -n pos-mk1 get all
 ## Notes for your AWS plan
 
 - `mk1`, `mk2`, `mk3` can run on the `t3.large` cluster.
-- Elasticsearch can run on a separate `t3.small`.
+- Redis/Elasticsearch can run on a separate data-box EC2.
 - For that split, keep `POS_SEARCH_ELASTICSEARCH_ENABLED=true` and set:
   - `POS_ELASTICSEARCH_URIS=http://<elasticsearch-host>:9200`
+- Also set:
+  - `POS_REDIS_HOST=<redis-host>`
 - If ES is temporarily off, set:
   - `POS_SEARCH_ELASTICSEARCH_ENABLED=false`
 
@@ -62,7 +65,16 @@ Use this from the `mk1` repository on your data-box EC2:
 
 ```bash
 cp .env.elasticsearch.example .env.elasticsearch
-docker compose -f compose.elasticsearch.yaml up -d
+docker compose --env-file .env.elasticsearch -f compose.elasticsearch.yaml up -d
+```
+
+### Redis on data-box (compose)
+
+Use this from the `mk1` repository on your data-box EC2:
+
+```bash
+cp .env.redis.example .env.redis
+docker compose --env-file .env.redis -f compose.redis.yaml up -d
 ```
 
 ## Before real AWS use

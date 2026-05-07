@@ -38,10 +38,13 @@ foreach ($line in $addedLines) {
     if ($line -cmatch $secretPattern) {
         $publicSeedPasswordPlaceholder = '\$\{POS_SECURITY_' + 'PASSWORD:admin123!@\#\}'
         if (
+            $line -match '\$\{[A-Z0-9_]+:\?[^\}]+\}' -or
             $line -match '[:=]\s*($|CHANGE_ME|change-me|change-this-for-real-env|pos$|pos-admin1234$|admin123!@\#$)' -or
             $line -match '[:=]\s*""\s*$' -or
             $line -match "[:=]\s*''\s*$" -or
             $line -match '[:=]\s*"<[^"]+>"\s*$' -or
+            $line -match '[:=]\s*<[^>\s]+>\s*$' -or
+            $line -match '[:=]\s*"\$\{[^}]+\}"\s*$' -or
             $line -match $publicSeedPasswordPlaceholder
         ) {
             continue

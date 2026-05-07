@@ -1,0 +1,16 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: personal-operating-system-redis
+    env_file:
+      - .env.redis
+    command: >
+      sh -c 'exec redis-server --appendonly yes --requirepass "${REDIS_AUTH_TOKEN:?REDIS_AUTH_TOKEN is required}"'
+    ports:
+      - "${POS_REDIS_BIND:-0.0.0.0}:${POS_REDIS_PORT:-6379}:6379"
+    volumes:
+      - personal-operating-system-redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  personal-operating-system-redis-data:
