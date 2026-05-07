@@ -1,4 +1,20 @@
 services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: mk1-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    volumes:
+      - mk1_es_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+volumes:
+  mk1_es_data:
+services:
   app:
     environment:
       POS_ELASTICSEARCH_URIS: http://elasticsearch:9200
