@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: mk1-config
 data:
-  POS_DB_URL: "jdbc:postgresql://REPLACE_RDS_ENDPOINT:5432/pos_mk1"
-  POS_REDIS_HOST: "REPLACE_DATA_BOX_REDIS_HOST"
+  POS_DB_URL: "jdbc:postgresql://pos-shared-postgres.chg8wqccax0e.ap-northeast-2.rds.amazonaws.com:5432/pos_mk1"
+  POS_REDIS_HOST: "10.20.17.124"
   POS_REDIS_PORT: "6379"
-  POS_ELASTICSEARCH_URIS: "http://REPLACE_DATA_BOX_ELASTICSEARCH_HOST:9200"
+  POS_ELASTICSEARCH_URIS: "http://10.20.17.124:9200"
   POS_SEARCH_ELASTICSEARCH_ENABLED: "true"

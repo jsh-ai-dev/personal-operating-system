@@ -16,5 +16,5 @@ patches:
 
 images:
   - name: personal-operating-system-mk1-app
-    newName: REPLACE_WITH_ECR_URI/personal-operating-system-mk1-app
+    newName: 948360715051.dkr.ecr.ap-northeast-2.amazonaws.com/personal-operating-system-mk1-app
     newTag: latest
