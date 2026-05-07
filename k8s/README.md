@@ -56,6 +56,15 @@ kubectl -n pos-mk1 get all
 - If ES is temporarily off, set:
   - `POS_SEARCH_ELASTICSEARCH_ENABLED=false`
 
+### Elasticsearch on data-box (compose)
+
+Use this from the `mk1` repository on your data-box EC2:
+
+```bash
+cp .env.elasticsearch.example .env.elasticsearch
+docker compose -f compose.elasticsearch.yaml up -d
+```
+
 ## Before real AWS use
 
 - Move secret values to AWS Secrets Manager / External Secrets.
