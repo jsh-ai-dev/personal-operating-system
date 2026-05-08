@@ -1,0 +1,59 @@
+# mk1 Spring Boot 이미지를 ECR로 빌드·푸시합니다.
+#
+# 사전 준비(GitHub 저장소 Settings → Secrets and variables):
+#   AWS_ROLE_TO_ASSUME  OIDC용 IAM 역할 ARN (예: arn:aws:iam::948360715051:role/github-actions-ecr-push)
+#
+# IAM 역할 신뢰 정책 예시: token.actions.githubusercontent.com, audience sts.amazonaws.com,
+#   조건 StringEquals token.actions.githubusercontent.com:sub → repo:<ORG>/<이저장소>:ref:refs/heads/main
+# 권한: ecr:GetAuthorizationToken + 리포지토리별 ecr:BatchCheckLayerAvailability, PutImage, InitiateLayerUpload,
+#   UploadLayerPart, CompleteLayerUpload, BatchGetImage 등 (AWS 관리형 AmazonEC2ContainerRegistryPowerUser 또는 세분화 정책)
+
+name: Build and push mk1 app to ECR
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - ".github/workflows/ecr-push.yml"
+      - "Dockerfile"
+      - "src/**"
+      - "gradle/**"
+      - "gradlew"
+      - "*.gradle.kts"
+      - "settings.gradle.kts"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  IMAGE_NAME: personal-operating-system-mk1-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
