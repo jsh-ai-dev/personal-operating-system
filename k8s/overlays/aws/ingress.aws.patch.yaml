@@ -3,5 +3,6 @@ kind: Ingress
 metadata:
   name: mk1-ingress
 spec:
+  ingressClassName: traefik
   rules:
-    - host: mk1.REPLACE_DOMAIN
+    - host: mk1.local
