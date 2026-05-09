@@ -11,16 +11,6 @@
 name: Build and push mk1 app to ECR
 
 on:
-  push:
-    branches: [main, master]
-    paths:
-      - ".github/workflows/ecr-push.yml"
-      - "Dockerfile"
-      - "src/**"
-      - "gradle/**"
-      - "gradlew"
-      - "*.gradle.kts"
-      - "settings.gradle.kts"
   workflow_dispatch:
 
 permissions:
@@ -57,3 +47,14 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: [self-hosted, linux, pos-deploy]
+    if: github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - name: Restart mk1 deployment on k3s
+        run: |
+          set -euo pipefail
+          sudo kubectl -n pos-mk1 rollout restart deploy/mk1-app
+          sudo kubectl -n pos-mk1 rollout status deploy/mk1-app --timeout=300s
