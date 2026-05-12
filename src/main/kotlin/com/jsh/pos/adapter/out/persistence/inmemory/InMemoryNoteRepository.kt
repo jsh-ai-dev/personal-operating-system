@@ -130,6 +130,7 @@ class InMemoryNoteRepository : NoteCommandPort, NoteQueryPort {
         val normalizedPage = page.coerceAtLeast(0)
         val normalizedSize = size.coerceAtLeast(1)
         val sorted = when (sort.trim().lowercase()) {
+            "created" -> source.sortedByDescending { it.createdAt }
             "title" -> source.sortedBy { it.title.lowercase() }
             else -> source.sortedWith(compareByDescending<Note> { it.updatedAt }.thenByDescending { it.createdAt })
         }

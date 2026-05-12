@@ -28,7 +28,8 @@
         <input type="hidden" name="page" value="0">
         <input type="hidden" name="size" th:value="${size}">
         <select class="input input-inline" name="sort">
-            <option value="recent" th:selected="${sort == 'recent'}">최신 수정순</option>
+            <option value="created" th:selected="${sort == 'created'}">작성일순</option>
+            <option value="recent" th:selected="${sort == 'recent'}">수정일순</option>
             <option value="title" th:selected="${sort == 'title'}">제목순</option>
             <option value="relevance" th:selected="${sort == 'relevance'}">관련도순</option>
         </select>

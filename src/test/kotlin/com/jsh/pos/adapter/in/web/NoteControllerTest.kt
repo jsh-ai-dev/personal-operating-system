@@ -96,7 +96,7 @@ class NoteControllerTest {
                                     ownerUsername = "anonymousUser",
                                     keyword = null,
                                     bookmarkedOnly = false,
-                                    sort = "recent",
+                                    sort = "created",
                                 ),
                             ),
                         ).willReturn(
@@ -114,7 +114,7 @@ class NoteControllerTest {
                         ),
                         keyword = "",
                         bookmarkedOnly = false,
-                        sort = "recent",
+                        sort = "created",
                         page = 0,
                         size = 20,
                         totalElements = 1,
@@ -139,7 +139,7 @@ class NoteControllerTest {
                     ownerUsername = "anonymousUser",
                     keyword = null,
                     bookmarkedOnly = false,
-                    sort = "recent",
+                    sort = "created",
                     page = 2,
                     size = 5,
                 ),
@@ -149,7 +149,7 @@ class NoteControllerTest {
                 notes = emptyList(),
                 keyword = "",
                 bookmarkedOnly = false,
-                sort = "recent",
+                sort = "created",
                 page = 2,
                 size = 5,
                 totalElements = 12,
@@ -496,7 +496,7 @@ class NoteControllerTest {
                     ownerUsername = "anonymousUser",
                     keyword = "kotlin",
                     bookmarkedOnly = false,
-                    sort = "recent",
+                    sort = "created",
                 ),
             ),
         ).willReturn(
@@ -515,7 +515,7 @@ class NoteControllerTest {
                 ),
                 keyword = "kotlin",
                 bookmarkedOnly = false,
-                sort = "recent",
+                sort = "created",
             ),
         )
 
@@ -548,7 +548,7 @@ class NoteControllerTest {
                     ownerUsername = "anonymousUser",
                     keyword = null,
                     bookmarkedOnly = true,
-                    sort = "recent",
+                    sort = "created",
                 ),
             ),
         ).willReturn(
@@ -567,7 +567,7 @@ class NoteControllerTest {
                 ),
                 keyword = "",
                 bookmarkedOnly = true,
-                sort = "recent",
+                sort = "created",
             ),
         )
 
@@ -789,7 +789,6 @@ class NoteControllerTest {
             .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, containsString("inline")))
     }
 }
-
 
 
 

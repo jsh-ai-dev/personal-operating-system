@@ -125,15 +125,11 @@ class ElasticsearchNoteSearchAdapter(
         val keywordJson = objectMapper.writeValueAsString(keyword)
         val from = page * size
         val pageJson = "\"from\": $from, \"size\": $size"
-        val sortJson = if (sort == "recent") {
-            """
-            ,
-              "sort": [
-                { "updatedAt": { "order": "desc" } }
-              ]
-            """.trimIndent()
-        } else {
-            ""
+        val sortJson = when (sort) {
+            "recent" -> sortJson("updatedAt")
+            "created" -> sortJson("createdAt")
+            "title" -> titleSortJson()
+            else -> ""
         }
 
         val highlightJson = """
@@ -175,6 +171,24 @@ class ElasticsearchNoteSearchAdapter(
             """.trimIndent(),
         )
     }
+
+    private fun sortJson(field: String): String =
+        """
+        ,
+          "sort": [
+            { "$field": { "order": "desc" } }
+          ]
+        """.trimIndent()
+
+    private fun titleSortJson(): String =
+        """
+        ,
+          "sort": [
+            { "titleSort.keyword": { "order": "asc", "missing": "_last" } },
+            { "title.keyword": { "order": "asc", "missing": "_last" } },
+            { "_score": { "order": "desc" } }
+          ]
+        """.trimIndent()
 
     private fun emptyPage(page: Int, size: Int): PageResult<NoteSearchHit> =
         PageResult(

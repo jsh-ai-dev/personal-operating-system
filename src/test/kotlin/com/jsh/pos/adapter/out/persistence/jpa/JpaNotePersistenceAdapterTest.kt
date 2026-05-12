@@ -131,6 +131,37 @@ class JpaNotePersistenceAdapterTest {
     }
 
     @Test
+    fun `findPageByOwner supports created sort`() {
+        val now = Instant.parse("2026-04-05T00:00:00Z")
+        adapter.save(
+            Note.create(
+                id = "note-created-old",
+                ownerUsername = "owner-created",
+                title = "Old",
+                content = "old",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                now = now,
+            ),
+        )
+        adapter.save(
+            Note.create(
+                id = "note-created-new",
+                ownerUsername = "owner-created",
+                title = "New",
+                content = "new",
+                visibility = Visibility.PRIVATE,
+                tags = emptySet(),
+                now = now.plusSeconds(60),
+            ),
+        )
+
+        val page = adapter.findPageByOwner(ownerUsername = "owner-created", sort = "created", page = 0, size = 10)
+
+        assertEquals(listOf("note-created-new", "note-created-old"), page.items.map { it.id })
+    }
+
+    @Test
     fun `searchPageByOwner applies owner filter and keyword with paging`() {
         val now = Instant.parse("2026-04-04T01:00:00Z")
         adapter.save(

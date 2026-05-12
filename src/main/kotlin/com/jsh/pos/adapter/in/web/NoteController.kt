@@ -79,7 +79,7 @@ class NoteController(
     fun list(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "false") bookmarkedOnly: Boolean,
-        @RequestParam(defaultValue = "recent") sort: String,
+        @RequestParam(defaultValue = "created") sort: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         authentication: Authentication? = null,
@@ -257,7 +257,7 @@ class NoteController(
     @GetMapping("/search")
     fun search(
         @RequestParam keyword: String,
-        @RequestParam(defaultValue = "recent") sort: String,
+        @RequestParam(defaultValue = "created") sort: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         authentication: Authentication? = null,
@@ -345,7 +345,7 @@ class NoteController(
     }
 
     /**
-     * 북마크된 노트 목록을 최신 수정순으로 조회합니다.
+     * 북마크된 노트 목록을 작성일순으로 조회합니다.
      *
      * HTTP 메서드: GET
      * 경로: /api/v1/notes/bookmarks
@@ -357,7 +357,7 @@ class NoteController(
      */
     @GetMapping("/bookmarks")
     fun getBookmarked(
-        @RequestParam(defaultValue = "recent") sort: String,
+        @RequestParam(defaultValue = "created") sort: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
         authentication: Authentication? = null,
@@ -615,7 +615,6 @@ private fun Note.toResponse(): NoteResponse = NoteResponse(
     hasStoredFile = hasStoredFile,
     originalFileName = originalFileName,
 )
-
 
 
 

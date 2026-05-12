@@ -4,12 +4,14 @@ import com.jsh.pos.domain.note.Note
 import com.jsh.pos.domain.note.Visibility
 import org.springframework.data.annotation.Id
 import java.time.Instant
+import java.util.Locale
 
 data class NoteSearchDocument(
     @Id
     val id: String,
     val ownerUsername: String,
     val title: String,
+    val titleSort: String,
     val content: String,
     val aiSummary: String? = null,
     val tags: Set<String> = emptySet(),
@@ -36,6 +38,7 @@ data class NoteSearchDocument(
             id = note.id,
             ownerUsername = note.ownerUsername,
             title = note.title,
+            titleSort = note.title.trim().lowercase(Locale.KOREA),
             content = note.content,
             aiSummary = note.aiSummary,
             tags = note.tags,

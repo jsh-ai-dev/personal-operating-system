@@ -14,7 +14,7 @@ import com.jsh.pos.domain.note.Note
 interface GetBookmarkedNotesUseCase {
 
     /**
-     * 북마크된 노트 목록을 최신 수정순으로 반환합니다.
+     * 북마크된 노트 목록을 요청한 정렬 기준으로 반환합니다.
      *
      * @return 북마크된 노트 목록 (없으면 빈 리스트)
      */

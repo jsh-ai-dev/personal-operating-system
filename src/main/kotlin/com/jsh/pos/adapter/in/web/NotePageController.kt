@@ -57,7 +57,7 @@ class NotePageController(
     fun list(
         @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "false") bookmarkedOnly: Boolean,
-        @RequestParam(defaultValue = "recent") sort: String = "recent",
+        @RequestParam(defaultValue = "created") sort: String = "created",
         @RequestParam(defaultValue = "0") page: Int = 0,
         @RequestParam(defaultValue = "20") size: Int = GetNoteListPageUseCase.DEFAULT_PAGE_SIZE,
         model: Model,
@@ -504,7 +504,6 @@ data class NoteForm(
     val visibility: Visibility = Visibility.PRIVATE,
     val tagsText: String = "",
 )
-
 
 
 

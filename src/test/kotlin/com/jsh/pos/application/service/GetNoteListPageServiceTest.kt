@@ -135,6 +135,33 @@ class GetNoteListPageServiceTest {
     }
 
     @Test
+    fun `get accepts created sort`() {
+        noteQueryPort.allResult = PageResult(
+            items = listOf(sampleNote(id = "note-created", title = "created", ownerUsername = "pos-admin")),
+            page = 0,
+            size = 10,
+            totalElements = 1,
+            totalPages = 1,
+            hasPrevious = false,
+            hasNext = false,
+        )
+
+        val result = service.get(
+            GetNoteListPageUseCase.Command(
+                ownerUsername = "pos-admin",
+                keyword = null,
+                bookmarkedOnly = false,
+                sort = "created",
+                page = 0,
+                size = 10,
+            ),
+        )
+
+        assertEquals("created", noteQueryPort.lastAllSort)
+        assertEquals("created", result.sort)
+    }
+
+    @Test
     fun `get delegates paged search and keeps highlight`() {
         searchNotesUseCase.nextResult = SearchNotesUseCase.Result(
             hits = listOf(

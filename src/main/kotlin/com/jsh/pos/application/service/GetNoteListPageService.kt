@@ -111,7 +111,7 @@ class GetNoteListPageService(
 
     private fun normalizeSort(sort: String): String {
         val normalized = sort.trim().lowercase(Locale.getDefault())
-        return if (normalized in ALLOWED_SORTS) normalized else "recent"
+        return if (normalized in ALLOWED_SORTS) normalized else DEFAULT_SORT
     }
 
 
@@ -150,7 +150,8 @@ class GetNoteListPageService(
     }
 
     private companion object {
-        private val ALLOWED_SORTS = setOf("recent", "title", "relevance")
+        private const val DEFAULT_SORT = "created"
+        private val ALLOWED_SORTS = setOf("recent", "created", "title", "relevance")
     }
 }
 

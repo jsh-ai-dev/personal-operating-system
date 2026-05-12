@@ -118,6 +118,7 @@ class JpaNotePersistenceAdapter(
     private fun resolveSort(sort: String): Sort {
         val normalizedSort = sort.trim().lowercase()
         return when (normalizedSort) {
+            "created" -> Sort.by(Sort.Order.desc("createdAt"))
             "title" -> Sort.by(Sort.Order.asc("title").ignoreCase())
             "relevance" -> Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("createdAt"))
             else -> Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("createdAt"))

@@ -50,7 +50,7 @@ class NotePageControllerTest {
             notes = listOf(sampleNote("note-1", "제목")),
             keyword = "",
             bookmarkedOnly = false,
-            sort = "recent",
+            sort = "created",
         )
 
         val model = ExtendedModelMap()
@@ -59,7 +59,7 @@ class NotePageControllerTest {
         assertEquals("notes/list", viewName)
         assertEquals(1, (model["notes"] as List<*>).size)
         assertEquals(false, noteListPageService.lastCommand?.bookmarkedOnly)
-        assertEquals("recent", noteListPageService.lastCommand?.sort)
+        assertEquals("created", noteListPageService.lastCommand?.sort)
     }
 
     @Test
@@ -120,7 +120,7 @@ class NotePageControllerTest {
     }
 
     @Test
-    fun `list falls back to recent sort and exposes date display maps`() {
+    fun `list falls back to created sort and exposes date display maps`() {
         noteListPageService.nextResult = GetNoteListPageUseCase.Result(
             notes = listOf(
                 sampleNote(
@@ -136,7 +136,7 @@ class NotePageControllerTest {
             ),
             keyword = "",
             bookmarkedOnly = false,
-            sort = "recent",
+            sort = "created",
         )
 
         val model = ExtendedModelMap()
@@ -144,7 +144,7 @@ class NotePageControllerTest {
 
         val notes = model["notes"] as List<Note>
         assertEquals(listOf("newer", "older"), notes.map { it.id })
-        assertEquals("recent", model["sort"])
+        assertEquals("created", model["sort"])
 
         val createdMap = model["createdAtDisplayById"] as Map<*, *>
         val updatedMap = model["updatedAtDisplayById"] as Map<*, *>
