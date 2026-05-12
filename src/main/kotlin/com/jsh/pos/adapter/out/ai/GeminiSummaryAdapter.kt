@@ -3,6 +3,7 @@ package com.jsh.pos.adapter.out.ai
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.jsh.pos.application.port.out.AiSummaryException
 import com.jsh.pos.application.port.out.AiSummaryPort
+import com.jsh.pos.application.port.out.AiSummaryResult
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.MediaType
@@ -30,7 +31,7 @@ class GeminiSummaryAdapter(
         .baseUrl("https://generativelanguage.googleapis.com")
         .build()
 
-    override fun summarize(text: String, modelTier: String): String {
+    override fun summarize(text: String, modelTier: String): AiSummaryResult {
         if (apiKey.isBlank()) {
             throw AiSummaryException(
                 "Gemini API 키가 설정되지 않았습니다. " +
@@ -46,9 +47,13 @@ class GeminiSummaryAdapter(
             model = model,
         )
 
-        return summary ?: throw AiSummaryException(
+        val result = summary ?: throw AiSummaryException(
             "Gemini 응답에서 요약 결과를 찾을 수 없습니다. " +
                 "필요하면 max-output-tokens 값을 늘려보세요."
+        )
+        return AiSummaryResult(
+            summary = result,
+            modelTier = modelTier.trim().lowercase(),
         )
     }
 

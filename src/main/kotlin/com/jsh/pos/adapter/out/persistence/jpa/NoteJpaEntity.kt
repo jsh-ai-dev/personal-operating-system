@@ -15,6 +15,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
+import java.math.BigDecimal
 import java.time.Instant
 
 /**
@@ -50,6 +51,18 @@ class NoteJpaEntity(
 
     @Column(name = "ai_summary", nullable = true, columnDefinition = "TEXT")
     val aiSummary: String? = null,
+
+    @Column(name = "ai_summary_model_tier", nullable = true, length = 50)
+    val aiSummaryModelTier: String? = null,
+
+    @Column(name = "ai_summary_input_tokens", nullable = true)
+    val aiSummaryInputTokens: Int? = null,
+
+    @Column(name = "ai_summary_output_tokens", nullable = true)
+    val aiSummaryOutputTokens: Int? = null,
+
+    @Column(name = "ai_summary_estimated_cost_usd", nullable = true, precision = 18, scale = 8)
+    val aiSummaryEstimatedCostUsd: BigDecimal? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false, length = 20)
@@ -111,6 +124,10 @@ class NoteJpaEntity(
         title = title,
         content = content,
         aiSummary = aiSummary,
+        aiSummaryModelTier = aiSummaryModelTier,
+        aiSummaryInputTokens = aiSummaryInputTokens,
+        aiSummaryOutputTokens = aiSummaryOutputTokens,
+        aiSummaryEstimatedCostUsd = aiSummaryEstimatedCostUsd,
         visibility = visibility,
         tags = tags,
         bookmarked = bookmarked,
@@ -135,6 +152,10 @@ class NoteJpaEntity(
             title = note.title,
             content = note.content,
             aiSummary = note.aiSummary,
+            aiSummaryModelTier = note.aiSummaryModelTier,
+            aiSummaryInputTokens = note.aiSummaryInputTokens,
+            aiSummaryOutputTokens = note.aiSummaryOutputTokens,
+            aiSummaryEstimatedCostUsd = note.aiSummaryEstimatedCostUsd,
             visibility = note.visibility,
             tags = note.tags,
             bookmarked = note.bookmarked,

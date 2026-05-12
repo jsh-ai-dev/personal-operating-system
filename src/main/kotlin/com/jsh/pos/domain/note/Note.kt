@@ -1,5 +1,6 @@
 package com.jsh.pos.domain.note
 
+import java.math.BigDecimal
 import java.time.Instant
 
 /**
@@ -28,6 +29,10 @@ data class Note(
     val hasStoredFile: Boolean = false,  // 원본 파일 바이트를 함께 저장한 노트인지 여부
     val fileBytes: ByteArray? = null,    // 저장된 원본 파일 바이트 (목록 조회에서는 null일 수 있음)
     val aiSummary: String? = null,       // 사용자가 저장한 AI 요약
+    val aiSummaryModelTier: String? = null,
+    val aiSummaryInputTokens: Int? = null,
+    val aiSummaryOutputTokens: Int? = null,
+    val aiSummaryEstimatedCostUsd: BigDecimal? = null,
     val createdAt: Instant,              // 작성 시간
     val updatedAt: Instant,              // 최종 수정 시간
 ) {
@@ -79,10 +84,21 @@ data class Note(
     /**
      * AI 요약문을 저장한 새 인스턴스를 반환합니다.
      */
-    fun updateSummary(summary: String, now: Instant): Note {
+    fun updateSummary(
+        summary: String,
+        now: Instant,
+        modelTier: String? = null,
+        inputTokens: Int? = null,
+        outputTokens: Int? = null,
+        estimatedCostUsd: BigDecimal? = null,
+    ): Note {
         require(summary.isNotBlank()) { "저장할 요약이 없습니다." }
         return copy(
             aiSummary = summary.trim(),
+            aiSummaryModelTier = modelTier?.trim()?.ifBlank { null },
+            aiSummaryInputTokens = inputTokens,
+            aiSummaryOutputTokens = outputTokens,
+            aiSummaryEstimatedCostUsd = estimatedCostUsd,
             updatedAt = now,
         )
     }
@@ -123,7 +139,9 @@ data class Note(
             require(title.isNotBlank()) { "제목은 비워둘 수 없습니다" }
 
             // 본문 검증: 공백만 있으면 안 됨
-            require(content.isNotBlank()) { "본문은 비워둘 수 없습니다" }
+            if (fileBytes == null) {
+                require(content.isNotBlank()) { "본문은 비워둘 수 없습니다" }
+            }
 
             return Note(
                 id = id,

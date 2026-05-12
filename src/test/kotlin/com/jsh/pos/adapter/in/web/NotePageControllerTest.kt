@@ -233,7 +233,7 @@ class NotePageControllerTest {
         assertEquals("notes/detail", viewName)
         assertEquals("상세", (model["note"] as Note).title)
         assertEquals("alpha, zeta", model["tagsDisplay"])
-        assertEquals("flash", model["selectedSummaryModelTier"])
+        assertEquals("gpt-5-nano", model["selectedSummaryModelTier"])
     }
 
     @Test
@@ -243,11 +243,11 @@ class NotePageControllerTest {
 
         val model = ExtendedModelMap()
         val redirect = RedirectAttributesModelMap()
-        val viewName = controller.generateSummary("note-1", "pro", model, redirect)
+        val viewName = controller.generateSummary("note-1", "gpt-5-mini", model, redirect)
 
         assertEquals("notes/detail", viewName)
         assertEquals("생성된 요약", model["generatedSummary"])
-        assertEquals("pro", model["selectedSummaryModelTier"])
+        assertEquals("gpt-5-mini", model["selectedSummaryModelTier"])
     }
 
     @Test
@@ -506,11 +506,11 @@ class NotePageControllerTest {
         val viewName = controller.upload(file, redirect)
 
         assertEquals("redirect:/notes/note-1", viewName)
-        assertEquals("architecture", createUseCase.lastCommand?.title)
+        assertEquals("architecture.pdf", createUseCase.lastCommand?.title)
         assertEquals("architecture.pdf", createUseCase.lastCommand?.originalFileName)
         assertEquals("application/pdf", createUseCase.lastCommand?.fileContentType)
         assertTrue(createUseCase.lastCommand?.fileBytes?.contentEquals(pdfBytes) == true)
-        assertTrue(createUseCase.lastCommand?.content?.contains("architecture.pdf") == true)
+        assertEquals("", createUseCase.lastCommand?.content)
     }
 
     // ── 파일 다운로드 테스트 ──

@@ -9,8 +9,8 @@ import java.io.ByteArrayInputStream
  * 노트 AI 요약의 입력 텍스트를 만듭니다. (MVC NotePageController와 동일 규칙)
  */
 object NoteSummarySourceText {
-    private const val DEFAULT_MODEL_TIER = "flash"
-    private val ALLOWED_MODEL_TIERS = setOf("flash", "pro")
+    private const val DEFAULT_MODEL_TIER = "gpt-5-nano"
+    private val ALLOWED_MODEL_TIERS = setOf("gpt-5-nano", "gpt-5-mini")
 
     fun normalizeModelTier(modelTier: String): String {
         val normalized = modelTier.trim().lowercase()

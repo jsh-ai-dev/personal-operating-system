@@ -62,8 +62,9 @@
             <form class="actions" th:action="@{|/notes/${note.id}/summary/generate|}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <select class="input input-inline" name="modelTier">
-                    <option value="flash" th:selected="${selectedSummaryModelTier == 'flash'}">flash</option>
-                    <option value="pro" th:selected="${selectedSummaryModelTier == 'pro'}">pro</option>
+                    <option value="gpt-5-nano" th:selected="${selectedSummaryModelTier == 'gpt-5-nano'}">gpt-5-nano ($0.05 / $0.4)</option>
+                    <option value="gpt-5-mini" th:selected="${selectedSummaryModelTier == 'gpt-5-mini'}">gpt-5-mini ($0.25 / $2)</option>
+                    <option value="gpt-5" disabled>gpt-5 ($1.25 / $10)</option>
                 </select>
                 <button class="btn btn-primary" type="submit">AI 요약 생성</button>
             </form>

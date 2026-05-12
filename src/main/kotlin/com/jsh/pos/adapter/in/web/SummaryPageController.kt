@@ -148,8 +148,8 @@ class SummaryPageController(
     }
 
     companion object {
-        private const val DEFAULT_MODEL_TIER = "flash"
-        private val ALLOWED_MODEL_TIERS = setOf("flash", "pro")
+        private const val DEFAULT_MODEL_TIER = "gpt-5-nano"
+        private val ALLOWED_MODEL_TIERS = setOf("gpt-5-nano", "gpt-5-mini")
     }
 
     private enum class FileType {

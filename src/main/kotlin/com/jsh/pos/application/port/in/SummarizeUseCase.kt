@@ -16,7 +16,7 @@ interface SummarizeUseCase {
      *
      * @param text      파일에서 추출한 원본 텍스트
      * @param fileName  업로드된 파일명 (결과 화면 표시용)
-     * @param modelTier 요약 모델 티어 (flash/pro)
+     * @param modelTier 요약 모델 선택값
      */
     data class Command(
         val text: String,
@@ -37,6 +37,9 @@ interface SummarizeUseCase {
         val fileName: String,
         val originalLength: Int,
         val modelTier: String,
+        val inputTokens: Int? = null,
+        val outputTokens: Int? = null,
+        val estimatedCostUsd: java.math.BigDecimal? = null,
     )
 }
 

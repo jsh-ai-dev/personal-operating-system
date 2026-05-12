@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.math.BigDecimal
 import java.nio.charset.StandardCharsets
 
 /**
@@ -441,7 +442,7 @@ class NoteController(
             return ResponseEntity.notFound().build()
         }
 
-        val modelTier = NoteSummarySourceText.normalizeModelTier(body?.modelTier ?: "flash")
+        val modelTier = NoteSummarySourceText.normalizeModelTier(body?.modelTier ?: "gpt-5-nano")
         val sourceText = try {
             NoteSummarySourceText.extract(note)
         } catch (e: IllegalArgumentException) {
@@ -462,6 +463,9 @@ class NoteController(
                     summary = result.summary,
                     modelTier = result.modelTier,
                     originalLength = result.originalLength,
+                    inputTokens = result.inputTokens,
+                    outputTokens = result.outputTokens,
+                    estimatedCostUsd = result.estimatedCostUsd,
                 ),
             )
         } catch (e: AiSummaryException) {
@@ -489,6 +493,10 @@ class NoteController(
                 SaveNoteSummaryUseCase.Command(
                     id = id,
                     summary = body.summary,
+                    modelTier = body.modelTier,
+                    inputTokens = body.inputTokens,
+                    outputTokens = body.outputTokens,
+                    estimatedCostUsd = body.estimatedCostUsd,
                 ),
             ) ?: return ResponseEntity.notFound().build()
             ResponseEntity.ok(saved.toResponse())
@@ -561,11 +569,18 @@ data class GenerateSummaryResponse(
     val summary: String,
     val modelTier: String,
     val originalLength: Int,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
+    val estimatedCostUsd: BigDecimal? = null,
 )
 
 data class SaveSummaryRequest(
     @field:NotBlank(message = "요약 내용이 필요합니다")
     val summary: String,
+    val modelTier: String? = null,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
+    val estimatedCostUsd: BigDecimal? = null,
 )
 
 /**
@@ -590,6 +605,10 @@ data class NoteResponse(
     val tags: Set<String>,
     val bookmarked: Boolean,  // 북마크 여부
     val aiSummary: String? = null,
+    val aiSummaryModelTier: String? = null,
+    val aiSummaryInputTokens: Int? = null,
+    val aiSummaryOutputTokens: Int? = null,
+    val aiSummaryEstimatedCostUsd: BigDecimal? = null,
     /** PDF 등 원본 바이트를 서버에 보관한 노트 */
     val hasStoredFile: Boolean = false,
     /** 업로드 시 원본 파일명 (직접 작성 노트는 null) */
@@ -612,13 +631,11 @@ private fun Note.toResponse(): NoteResponse = NoteResponse(
     tags = tags,
     bookmarked = bookmarked,
     aiSummary = aiSummary,
+    aiSummaryModelTier = aiSummaryModelTier,
+    aiSummaryInputTokens = aiSummaryInputTokens,
+    aiSummaryOutputTokens = aiSummaryOutputTokens,
+    aiSummaryEstimatedCostUsd = aiSummaryEstimatedCostUsd,
     hasStoredFile = hasStoredFile,
     originalFileName = originalFileName,
 )
-
-
-
-
-
-
 

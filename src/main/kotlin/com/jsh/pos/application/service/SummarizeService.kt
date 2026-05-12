@@ -35,13 +35,16 @@ class SummarizeService(
         val normalizedModelTier = normalizeModelTier(command.modelTier)
 
         // 3. AI 요약 호출 (구현체는 설정된 provider에 따라 결정)
-        val summary = aiSummaryPort.summarize(trimmedText, normalizedModelTier)
+        val summaryResult = aiSummaryPort.summarize(trimmedText, normalizedModelTier)
 
         return SummarizeUseCase.Result(
-            summary = summary,
+            summary = summaryResult.summary,
             fileName = command.fileName,
             originalLength = command.text.length,
-            modelTier = normalizedModelTier,
+            modelTier = summaryResult.modelTier,
+            inputTokens = summaryResult.inputTokens,
+            outputTokens = summaryResult.outputTokens,
+            estimatedCostUsd = summaryResult.estimatedCostUsd,
         )
     }
 
@@ -53,8 +56,8 @@ class SummarizeService(
     companion object {
         // 파일 크기 제한과 별개로, 텍스트 길이도 제한 (개발 단계 상향)
         private const val MAX_CHARS = 120_000
-        private const val DEFAULT_MODEL_TIER = "flash"
-        private val ALLOWED_MODEL_TIERS = setOf("flash", "pro")
+        private const val DEFAULT_MODEL_TIER = "gpt-5-nano"
+        private val ALLOWED_MODEL_TIERS = setOf("gpt-5-nano", "gpt-5-mini")
     }
 }
 

@@ -36,10 +36,9 @@ object NoteUploadParser {
             throw IllegalArgumentException("파일 형식이 올바르지 않습니다.")
         }
 
-        val title = originalName.substringBeforeLast(".").trim().ifBlank { originalName }
-
         return when (fileType) {
             FileType.TEXT -> {
+                val title = originalName.substringBeforeLast(".").trim().ifBlank { originalName }
                 val text = file.bytes.toString(Charsets.UTF_8)
                 if (text.isBlank()) {
                     throw IllegalArgumentException("파일에 내용이 없습니다.")
@@ -55,6 +54,7 @@ object NoteUploadParser {
             }
 
             FileType.PDF -> {
+                val title = originalName.trim()
                 val fileBytes = file.bytes
                 if (fileBytes.isEmpty()) {
                     throw IllegalArgumentException("파일에 내용이 없습니다.")
@@ -62,7 +62,7 @@ object NoteUploadParser {
                 CreateNoteUseCase.Command(
                     ownerUsername = ownerUsername,
                     title = title,
-                    content = buildFilePlaceholderContent(originalName),
+                    content = "",
                     visibility = Visibility.PRIVATE,
                     tags = emptySet(),
                     originalFileName = originalName,
@@ -103,7 +103,4 @@ object NoteUploadParser {
 
         FileType.UNSUPPORTED -> MediaType.APPLICATION_OCTET_STREAM_VALUE
     }
-
-    private fun buildFilePlaceholderContent(fileName: String): String =
-        "업로드된 PDF 파일 '$fileName' 입니다. 상세 화면에서 다운로드해 확인하세요."
 }

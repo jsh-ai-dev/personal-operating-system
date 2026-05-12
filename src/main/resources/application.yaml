@@ -68,21 +68,20 @@ pos:
     token-cookie-name: ${POS_AUTH_TOKEN_COOKIE:mk1_pos_jwt}
     token-cookie-max-age-sec: ${POS_AUTH_TOKEN_COOKIE_MAX_AGE_SEC:604800}
   ai:
-    # gemini | openai
-    provider: ${POS_AI_PROVIDER:gemini}
+    # openai | gemini
+    provider: ${POS_AI_PROVIDER:openai}
     gemini:
       # Gemini API 키: GEMINI_API_KEY 환경변수로 주입하세요.
       # 예) $env:GEMINI_API_KEY="AIza..." 후 서버 재시작
       api-key: ${GEMINI_API_KEY:}
-      # 화면에서 flash/pro 라디오 선택 시 아래 모델로 매핑됩니다.
-      # 기본값은 flash 모델을 사용합니다. 필요 시 환경변수로 교체하세요.
+      # provider=gemini 사용 시 아래 모델로 매핑됩니다.
       flash-model: ${GEMINI_FLASH_MODEL:gemini-2.5-flash}
       pro-model: ${GEMINI_PRO_MODEL:gemini-2.5-pro}
       # 요약 응답 최대 토큰
       max-output-tokens: ${GEMINI_MAX_OUTPUT_TOKENS:4096}
     openai:
-      # 필요 시 provider=openai로 바꾸면 이 설정을 사용합니다.
+      # 기본 provider=openai에서 이 설정을 사용합니다.
       api-key: ${OPENAI_API_KEY:}
-      model: ${OPENAI_MODEL:gpt-4o-mini}
-      max-tokens: ${OPENAI_MAX_TOKENS:2048}
+      model: ${OPENAI_MODEL:gpt-5-nano}
+      max-tokens: ${OPENAI_MAX_TOKENS:8192}
 

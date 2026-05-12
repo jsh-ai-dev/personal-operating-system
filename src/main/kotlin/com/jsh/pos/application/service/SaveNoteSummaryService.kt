@@ -21,7 +21,14 @@ class SaveNoteSummaryService(
 
     override fun save(command: SaveNoteSummaryUseCase.Command): Note? {
         val existing = noteQueryPort.findById(command.id) ?: return null
-        val updated = existing.updateSummary(command.summary, clock.instant())
+        val updated = existing.updateSummary(
+            summary = command.summary,
+            now = clock.instant(),
+            modelTier = command.modelTier,
+            inputTokens = command.inputTokens,
+            outputTokens = command.outputTokens,
+            estimatedCostUsd = command.estimatedCostUsd,
+        )
         return noteCommandPort.save(updated).also {
             runCatching { noteSearchIndexPort.upsert(it) }
                 .onFailure { ex ->

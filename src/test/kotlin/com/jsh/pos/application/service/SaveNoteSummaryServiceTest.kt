@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -46,9 +47,22 @@ class SaveNoteSummaryServiceTest {
         val existing = sampleNote(id = "note-1", aiSummary = null, updatedAt = Instant.parse("2026-04-01T00:00:00Z"))
         noteQueryPort.note = existing
 
-        val result = service.save(SaveNoteSummaryUseCase.Command(id = "note-1", summary = "  저장할 요약  "))
+        val result = service.save(
+            SaveNoteSummaryUseCase.Command(
+                id = "note-1",
+                summary = "  저장할 요약  ",
+                modelTier = "gpt-5-nano",
+                inputTokens = 1200,
+                outputTokens = 300,
+                estimatedCostUsd = BigDecimal("0.00018000"),
+            ),
+        )
 
         assertEquals("저장할 요약", result?.aiSummary)
+        assertEquals("gpt-5-nano", result?.aiSummaryModelTier)
+        assertEquals(1200, result?.aiSummaryInputTokens)
+        assertEquals(300, result?.aiSummaryOutputTokens)
+        assertEquals(BigDecimal("0.00018000"), result?.aiSummaryEstimatedCostUsd)
         assertEquals(fixedNow, result?.updatedAt)
         assertEquals("note-1", noteSearchIndexPort.lastUpsertedId)
         assertEquals("pos-admin", noteListCachePort.lastEvictedOwner)

@@ -33,14 +33,18 @@
             <fieldset class="model-picker">
                 <legend>요약 모델 선택</legend>
                 <label class="model-option">
-                    <input type="radio" name="modelTier" value="flash"
-                           th:checked="${selectedModelTier == null or selectedModelTier == 'flash'}">
-                    <span><strong>Flash</strong> (빠름, 일상 요약 추천)</span>
+                    <input type="radio" name="modelTier" value="gpt-5-nano"
+                           th:checked="${selectedModelTier == null or selectedModelTier == 'gpt-5-nano'}">
+                    <span><strong>gpt-5-nano</strong> ($0.05 / $0.4)</span>
                 </label>
                 <label class="model-option">
-                    <input type="radio" name="modelTier" value="pro"
-                           th:checked="${selectedModelTier == 'pro'}">
-                    <span><strong>Pro</strong> (느릴 수 있지만 더 깊은 요약)</span>
+                    <input type="radio" name="modelTier" value="gpt-5-mini"
+                           th:checked="${selectedModelTier == 'gpt-5-mini'}">
+                    <span><strong>gpt-5-mini</strong> ($0.25 / $2)</span>
+                </label>
+                <label class="model-option">
+                    <input type="radio" name="modelTier" value="gpt-5" disabled>
+                    <span><strong>gpt-5</strong> ($1.25 / $10)</span>
                 </label>
             </fieldset>
 
@@ -57,7 +61,7 @@
         <div class="result-meta">
             <span class="badge">📁 <span th:text="${result.fileName}">파일명</span></span>
             <span class="badge">📝 원본 <span th:text="${result.originalLength}">0</span>자</span>
-            <span class="badge">🤖 모델 <span th:text="${#strings.toUpperCase(result.modelTier)}">FLASH</span></span>
+            <span class="badge">🤖 모델 <span th:text="${result.modelTier}">gpt-5-nano</span></span>
         </div>
 
         <div class="summary-box" th:text="${result.summary}">

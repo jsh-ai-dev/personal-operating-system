@@ -491,8 +491,8 @@ class NotePageController(
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                 .withLocale(Locale.KOREA)
                 .withZone(ZoneId.systemDefault())
-        private const val DEFAULT_SUMMARY_MODEL_TIER = "flash"
-        private val ALLOWED_SUMMARY_MODEL_TIERS = setOf("flash", "pro")
+        private const val DEFAULT_SUMMARY_MODEL_TIER = "gpt-5-nano"
+        private val ALLOWED_SUMMARY_MODEL_TIERS = setOf("gpt-5-nano", "gpt-5-mini")
     }
 }
 
@@ -504,7 +504,6 @@ data class NoteForm(
     val visibility: Visibility = Visibility.PRIVATE,
     val tagsText: String = "",
 )
-
 
 
 
